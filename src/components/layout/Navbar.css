@@ -1,0 +1,212 @@
+/* ==========================================================================
+   Navbar — Telucup (TEL-U CUP) Navbar Styles
+   Primary Color: #b6252a (Telkom University Red)
+   Font: Metropolis / system fallback
+   ========================================================================== */
+
+/* ---------- Navbar Base ---------- */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: #b6252a;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.navbar--scrolled {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Container ---------- */
+.navbar__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+}
+
+/* ---------- Brand / Logo ---------- */
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.navbar__logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ---------- Desktop Menu ---------- */
+.navbar__menu {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.25rem;
+}
+
+@media (min-width: 992px) {
+  .navbar__menu {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.navbar__menu-item {
+  position: relative;
+}
+
+.navbar__menu-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.navbar__menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  opacity: 0.95;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.navbar__menu-link:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+/* ---------- Hamburger Toggle ---------- */
+.navbar__toggler {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  z-index: 1050;
+  position: relative;
+}
+
+.navbar__toggler:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+@media (min-width: 992px) {
+  .navbar__toggler {
+    display: none;
+  }
+}
+
+.navbar__toggler-icon {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Hamburger to X animation */
+.navbar__toggler--active .navbar__toggler-icon:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.navbar__toggler--active .navbar__toggler-icon:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.navbar__toggler--active .navbar__toggler-icon:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ---------- Mobile Overlay Menu ---------- */
+.navbar__mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1040;
+  background-color: #b6252a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 2rem 2rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.35s ease, visibility 0.35s ease, transform 0.35s ease;
+}
+
+.navbar__mobile--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (min-width: 992px) {
+  .navbar__mobile {
+    display: none !important;
+  }
+}
+
+.navbar__mobile-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar__mobile-item {
+  opacity: 0;
+  transform: translateX(-16px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.navbar__mobile--open .navbar__mobile-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.navbar__mobile-link {
+  display: block;
+  padding: 0.875rem 0.5rem;
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: padding-left 0.2s ease, background-color 0.2s ease;
+}
+
+.navbar__mobile-link:hover {
+  padding-left: 1rem;
+  background-color: rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  color: #ffffff;
+}
+
+/* ---------- Utility: Spacer below fixed navbar ---------- */
+.navbar-spacer {
+  height: 76px; /* match navbar height */
+}
