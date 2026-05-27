@@ -12,7 +12,8 @@ import {
   Users, 
   Menu,
   MoreVertical,
-  User
+  User,
+  LogOut
 } from "lucide-react";
 
 export default function PanitiaDashboardLayout({
@@ -22,6 +23,25 @@ export default function PanitiaDashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }
+      });
+    } catch (e) {
+      console.error("Logout error", e);
+    } finally {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+  };
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/panitia" },
@@ -105,6 +125,17 @@ export default function PanitiaDashboardLayout({
                 );
               })}
             </ul>
+          </div>
+
+          {/* Logout Button */}
+          <div className="p-4 border-t border-gray-100">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg transition-colors text-red-600 hover:bg-red-50 font-medium"
+            >
+              <LogOut size={20} />
+              <span className="text-[14px] leading-tight">Keluar</span>
+            </button>
           </div>
         </aside>
 
