@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function MatchCard({ match }: { match: Match }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-[280px] flex flex-col overflow-hidden">
+    <div className={`bg-white rounded-xl shadow-sm border w-[280px] flex flex-col overflow-hidden border-gray-100 ${match.isThirdPlace ? "third-place-match" : ""}`}>
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-2 border-b border-gray-50 bg-gray-50/50">
         <div className="flex items-center gap-2">
@@ -20,7 +20,7 @@ export default function MatchCard({ match }: { match: Match }) {
             }`}
           />
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            {match.matchNumber}
+            {match.isThirdPlace ? "Juara 3" : match.matchNumber}
           </span>
         </div>
         <div className="text-[10px] font-bold text-gray-400">
