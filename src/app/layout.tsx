@@ -31,7 +31,6 @@ export default function RootLayout({
     >
       <body className={`${geistSans.className} min-h-full flex flex-col`}>
         <Navbar />
-        <div className="navbar-spacer" />
         {children}
         <ChatbotWidget />
       </body>
