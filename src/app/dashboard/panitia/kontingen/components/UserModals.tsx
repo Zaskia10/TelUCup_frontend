@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createPlayer, assignPic } from "../services";
+import { createPlayer, assignPic, assignPlayerToContingent } from "../services";
 import { X, Loader2, Info } from "lucide-react";
 
 function ModalBase({ isOpen, onClose, title, children }: any) {
@@ -298,6 +298,77 @@ export function AssignPlayerToContingentModal({ isOpen, onClose, onSuccess, play
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" disabled={isLoading}>Batal</button>
           <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-[#b71c1c] hover:bg-[#9c161a] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70" disabled={isLoading}>
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tugaskan PIC"}
+          </button>
+        </div>
+      </form>
+    </ModalBase>
+  );
+}
+
+export function AssignPlayerContingentModal({ isOpen, onClose, onSuccess, player, contingents }: any) {
+  const [contingentId, setContingentId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && player) {
+      setContingentId(player.contingent_id ? player.contingent_id.toString() : "");
+      setError(null);
+    }
+  }, [isOpen, player]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contingentId) {
+      setError("Pilih kontingen terlebih dahulu.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await assignPlayerToContingent(player.id, { contingent_id: parseInt(contingentId, 10) });
+      onSuccess(res.message || "Player berhasil di-assign ke kontingen.");
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Terjadi kesalahan.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen || !player) return null;
+
+  return (
+    <ModalBase isOpen={isOpen} onClose={onClose} title="Assign Kontingen Player">
+      <form onSubmit={handleSubmit} className="p-5">
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-2">
+            Anda akan mengassign <strong className="text-gray-800">{player.name}</strong> ke sebuah kontingen.
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Kontingen <span className="text-red-500">*</span></label>
+          <select 
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 transition-colors ${error ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-[#b71c1c]'}`}
+            value={contingentId}
+            onChange={(e) => setContingentId(e.target.value)}
+            disabled={isLoading}
+            required
+          >
+            <option value="" disabled>-- Pilih Kontingen --</option>
+            {contingents.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" disabled={isLoading}>Batal</button>
+          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-[#b71c1c] hover:bg-[#9c161a] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70" disabled={isLoading}>
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Simpan"}
           </button>
         </div>
       </form>

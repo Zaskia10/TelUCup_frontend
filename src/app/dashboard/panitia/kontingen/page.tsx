@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import ContingentDetailDrawer from "./components/ContingentDetailDrawer";
 import { CreateContingentModal, EditContingentModal, DeleteContingentModal } from "./components/ContingentModals";
-import { CreatePlayerModal, AssignPicModal, AssignPlayerToContingentModal } from "./components/UserModals";
+import { CreatePlayerModal, AssignPicModal, AssignPlayerToContingentModal, AssignPlayerContingentModal } from "./components/UserModals";
 
 function Toast({ message, type, onClose }: { message: string, type: 'success' | 'error', onClose: () => void }) {
   useEffect(() => {
@@ -39,6 +39,7 @@ export default function ManajemenKontingenPage() {
   // Search & Filter
   const [search, setSearch] = useState("");
   const [filterPic, setFilterPic] = useState("all");
+  const [filterPlayer, setFilterPlayer] = useState("all");
 
   // Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -47,6 +48,7 @@ export default function ManajemenKontingenPage() {
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [assignPicContingent, setAssignPicContingent] = useState<any>(null);
   const [assignPlayerToPic, setAssignPlayerToPic] = useState<any>(null);
+  const [assignContingentToPlayer, setAssignContingentToPlayer] = useState<any>(null);
   const [recentUser, setRecentUser] = useState<any>(null);
   const [detailContingentId, setDetailContingentId] = useState<number | null>(null);
 
@@ -116,8 +118,14 @@ export default function ManajemenKontingenPage() {
   }, [contingents, search, filterPic]);
 
   const filteredPlayers = useMemo(() => {
-    return players.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || (p.user?.email || "").toLowerCase().includes(search.toLowerCase()));
-  }, [players, search]);
+    return players.filter(p => {
+      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.user?.email || "").toLowerCase().includes(search.toLowerCase());
+      const matchFilter = filterPlayer === "all" ? true :
+                          filterPlayer === "no_contingent" ? !p.contingent_id :
+                          !!p.contingent_id;
+      return matchSearch && matchFilter;
+    });
+  }, [players, search, filterPlayer]);
 
   const filteredPics = useMemo(() => {
     return pics.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase()));
@@ -223,6 +231,21 @@ export default function ManajemenKontingenPage() {
                   <option value="all">Semua Status</option>
                   <option value="has_pic">Sudah ada PIC</option>
                   <option value="no_pic">Belum ada PIC</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><ChevronDown size={14} /></div>
+              </div>
+            </div>
+          )}
+          {activeTab === "player" && (
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <select 
+                  className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:border-[#b71c1c] cursor-pointer"
+                  value={filterPlayer} onChange={(e) => setFilterPlayer(e.target.value)}
+                >
+                  <option value="all">Semua Player</option>
+                  <option value="has_contingent">Sudah ada Kontingen</option>
+                  <option value="no_contingent">Belum ada Kontingen</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><ChevronDown size={14} /></div>
               </div>
@@ -354,15 +377,24 @@ export default function ManajemenKontingenPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {player.user?.role !== 'pic_kontingen' && (
+                        <div className="flex flex-col sm:flex-row gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
-                            onClick={() => setAssignPlayerToPic(player)}
-                            className="text-[11px] flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-colors w-full sm:w-auto justify-center sm:justify-end ml-auto opacity-0 group-hover:opacity-100"
-                            title="Promote Player to PIC"
+                            onClick={() => setAssignContingentToPlayer(player)}
+                            className="text-[11px] flex items-center gap-1 font-medium text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition-colors w-full sm:w-auto justify-center"
+                            title="Assign Kontingen"
                           >
-                            <ArrowUpRight size={12} /> Jadikan PIC
+                            <Building2 size={12} /> Assign Kontingen
                           </button>
-                        )}
+                          {player.user?.role !== 'pic_kontingen' && (
+                            <button 
+                              onClick={() => setAssignPlayerToPic(player)}
+                              className="text-[11px] flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-colors w-full sm:w-auto justify-center"
+                              title="Promote Player to PIC"
+                            >
+                              <ArrowUpRight size={12} /> Jadikan PIC
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -380,6 +412,7 @@ export default function ManajemenKontingenPage() {
       <CreatePlayerModal isOpen={isPlayerModalOpen} onClose={() => setIsPlayerModalOpen(false)} onSuccess={handleCreatePlayerSuccess} />
       <AssignPicModal isOpen={assignPicContingent !== null} onClose={() => setAssignPicContingent(null)} contingent={assignPicContingent} recentUser={recentUser} onSuccess={(msg: string) => { showToast(msg); fetchData(); }} />
       <AssignPlayerToContingentModal isOpen={assignPlayerToPic !== null} onClose={() => setAssignPlayerToPic(null)} player={assignPlayerToPic} contingents={contingents} onSuccess={(msg: string) => { showToast(msg); fetchData(); }} />
+      <AssignPlayerContingentModal isOpen={assignContingentToPlayer !== null} onClose={() => setAssignContingentToPlayer(null)} player={assignContingentToPlayer} contingents={contingents} onSuccess={(msg: string) => { showToast(msg); fetchData(); }} />
     </div>
   );
 }

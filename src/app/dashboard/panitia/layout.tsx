@@ -13,7 +13,8 @@ import {
   Menu,
   MoreVertical,
   User,
-  LogOut
+  LogOut,
+  Medal
 } from "lucide-react";
 
 export default function PanitiaDashboardLayout({
@@ -50,6 +51,7 @@ export default function PanitiaDashboardLayout({
     { name: "Tinjauan Medis (Self-Assessment)", icon: Stethoscope, href: "/dashboard/panitia/medis" },
     { name: "Kelola Galeri Event", icon: Camera, href: "/dashboard/panitia/galeri" },
     { name: "Kelola Kontingen & Pengguna", icon: Users, href: "/dashboard/panitia/kontingen" },
+    { name: "Pengaturan Cabang Olahraga", icon: Medal, href: "/dashboard/panitia/sports" },
   ];
 
   return (

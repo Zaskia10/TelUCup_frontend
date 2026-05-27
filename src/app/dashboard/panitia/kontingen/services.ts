@@ -122,3 +122,12 @@ export const promoteToPic = async (userId: number) => {
   });
   return handleResponse(res);
 };
+
+export const assignPlayerToContingent = async (playerId: number, payload: { contingent_id: number }) => {
+  const res = await fetch(`${API_BASE_URL}/players/${playerId}/assign-contingent`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+  return handleResponse(res);
+};
