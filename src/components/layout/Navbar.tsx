@@ -12,7 +12,7 @@ const navLinks = [
   { label: "Bagan", href: "/chart" },
   { label: "Peserta", href: `${BASE_URL}/participants` },
   { label: "Galeri", href: `${BASE_URL}/gallery` },
-  { label: "Log In", href: `${BASE_URL}/login` },
+  { label: "Log In", href: `/login` },
 ];
 
 export default function Navbar() {
