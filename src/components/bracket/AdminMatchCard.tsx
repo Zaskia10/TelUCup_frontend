@@ -1,15 +1,15 @@
 "use client";
 
-import type { AdminMatch } from "@/data/mockAdmin";
+import type { BracketMatch } from "@/types/bracket";
 
 interface AdminMatchCardProps {
-  match: AdminMatch;
+  match: BracketMatch;
   isSelected: boolean;
-  onSelect: (match: AdminMatch) => void;
+  onSelect: (match: BracketMatch) => void;
   onDropTeam: (
-    targetMatchId: string,
+    targetMatchId: number,
     targetSlot: "a" | "b",
-    sourceMatchId: string,
+    sourceMatchId: number,
     sourceSlot: "a" | "b"
   ) => void;
 }
@@ -39,7 +39,7 @@ export default function AdminMatchCard({
       labelClass: "text-amber-600",
     },
     scheduled: {
-      label: match.matchTime ?? "TBD",
+      label: match.match_time ?? "TBD",
       dotClass: "bg-gray-300",
       labelClass: "text-gray-400",
     },
@@ -70,10 +70,10 @@ export default function AdminMatchCard({
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${cfg.dotClass}`} />
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            {match.isThirdPlace ? "Juara 3" : `M${match.matchNumber}`}
+            {match.isThirdPlace ? "Juara 3" : `M${match.match_number}`}
           </span>
           <span className="text-[9px] font-bold text-gray-300 uppercase tracking-wider">
-            {match.roundName}
+            {match.round_name}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -113,32 +113,34 @@ export default function AdminMatchCard({
         <DraggableTeamRow
           matchId={match.id}
           slot="a"
-          name={match.teamA?.contingent.abbreviation ?? "TBD"}
-          fullName={match.teamA?.contingent.name}
-          score={match.status === "bye" ? null : match.scoreA}
+          name={match.team_a?.contingent.abbreviation ?? "TBD"}
+          fullName={match.team_a?.contingent.name}
+          score={match.status === "bye" ? null : match.score_a}
           isWinner={
             match.winner !== null &&
-            match.teamA !== null &&
-            match.winner.registrationId === match.teamA.registrationId
+            match.team_a !== null &&
+            match.winner.registration_id === match.team_a.registration_id
           }
-          isBye={isBye && !match.teamA}
-          isEmpty={!match.teamA}
+          isBye={isBye && !match.team_a}
+          isEmpty={!match.team_a}
+          isLocked={match.status === "live" || match.status === "finished"}
           onDropTeam={onDropTeam}
         />
 
         <DraggableTeamRow
           matchId={match.id}
           slot="b"
-          name={match.teamB?.contingent.abbreviation ?? "TBD"}
-          fullName={match.teamB?.contingent.name}
-          score={match.status === "bye" ? null : match.scoreB}
+          name={match.team_b?.contingent.abbreviation ?? "TBD"}
+          fullName={match.team_b?.contingent.name}
+          score={match.status === "bye" ? null : match.score_b}
           isWinner={
             match.winner !== null &&
-            match.teamB !== null &&
-            match.winner.registrationId === match.teamB.registrationId
+            match.team_b !== null &&
+            match.winner.registration_id === match.team_b.registration_id
           }
-          isBye={isBye && !match.teamB}
-          isEmpty={!match.teamB}
+          isBye={isBye && !match.team_b}
+          isEmpty={!match.team_b}
+          isLocked={match.status === "live" || match.status === "finished"}
           onDropTeam={onDropTeam}
         />
       </div>
@@ -146,7 +148,7 @@ export default function AdminMatchCard({
       {/* Footer */}
       <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/30 flex justify-between items-center mt-1">
         <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-          {match.matchDate ? (
+          {match.match_date ? (
             <>
               <svg
                 className="w-3 h-3"
@@ -161,7 +163,7 @@ export default function AdminMatchCard({
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              {match.matchDate}
+              {match.match_date}
             </>
           ) : (
             <span className="text-gray-300 italic text-[10px]">
@@ -211,9 +213,10 @@ function DraggableTeamRow({
   isWinner,
   isBye,
   isEmpty,
+  isLocked,
   onDropTeam,
 }: {
-  matchId: string;
+  matchId: number;
   slot: "a" | "b";
   name: string;
   fullName?: string;
@@ -221,14 +224,15 @@ function DraggableTeamRow({
   isWinner: boolean;
   isBye: boolean;
   isEmpty: boolean;
+  isLocked: boolean;
   onDropTeam: (
-    targetMatchId: string,
+    targetMatchId: number,
     targetSlot: "a" | "b",
-    sourceMatchId: string,
+    sourceMatchId: number,
     sourceSlot: "a" | "b"
   ) => void;
 }) {
-  const hasDraggableTeam = !isBye && !isEmpty;
+  const hasDraggableTeam = !isBye && !isEmpty && !isLocked;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!hasDraggableTeam) return;
@@ -249,6 +253,7 @@ function DraggableTeamRow({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (isLocked || isBye) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     const el = e.currentTarget as HTMLElement;
@@ -261,6 +266,7 @@ function DraggableTeamRow({
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (isLocked || isBye) return;
     e.preventDefault();
     const el = e.currentTarget as HTMLElement;
     el.classList.remove("ring-2", "ring-[#b6252a]/40", "bg-red-50/50", "rounded-lg");
@@ -269,7 +275,7 @@ function DraggableTeamRow({
     if (!raw) return;
 
     try {
-      const source = JSON.parse(raw) as { matchId: string; slot: "a" | "b" };
+      const source = JSON.parse(raw) as { matchId: number; slot: "a" | "b" };
       // Don't drop on itself
       if (source.matchId === matchId && source.slot === slot) return;
       onDropTeam(matchId, slot, source.matchId, source.slot);

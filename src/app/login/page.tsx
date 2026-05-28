@@ -39,9 +39,9 @@ export default function LoginPage() {
         const role = data.user?.role;
         if (role === "player") {
           router.push("/dashboard/player");
-        } else if (role === "panitia") {
+        } else if (role === "panitia" || role === "admin") {
           router.push("/dashboard/panitia");
-        } else if (role === "pic_kontingen") {
+        } else if (role === "pic_kontingen" || role === "pic") {
           router.push("/dashboard/pic_kontingen");
         } else {
           router.push("/"); // Fallback

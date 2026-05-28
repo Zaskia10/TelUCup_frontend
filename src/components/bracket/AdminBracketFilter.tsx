@@ -1,6 +1,6 @@
 "use client";
 
-import type { Sport, SportCategory, Registration } from "@/data/mockAdmin";
+import type { Sport, SportCategory, Registration } from "@/types/bracket";
 
 interface AdminBracketFilterProps {
   sports: Sport[];

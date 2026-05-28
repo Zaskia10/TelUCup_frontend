@@ -1,24 +1,26 @@
 "use client";
 
-import { mockTournamentData } from "@/data/mockBracket";
+import { BracketData } from "@/types/bracket";
 import MatchCard from "./MatchCard";
 import "./bracket.css";
 
-export default function TournamentBracket() {
+export default function TournamentBracket({ bracketData }: { bracketData: BracketData }) {
+  if (!bracketData || !bracketData.rounds) return null;
+
   return (
     <div className="w-full overflow-x-auto pb-[20rem] pt-24">
       <div className="flex flex-nowrap items-stretch gap-12 min-w-max px-4">
-        {mockTournamentData.map((round, roundIndex) => (
-          <div key={round.id} className="bracket-column flex flex-col relative" style={{ minHeight: '600px' }}>
+        {bracketData.rounds.map((round, roundIndex) => (
+          <div key={round.round} className="bracket-column flex flex-col relative" style={{ minHeight: '600px' }}>
             
             {/* Round Header */}
             <div className="absolute -top-16 left-0 w-full flex flex-col items-center justify-center">
               <div className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-sm border ${
-                roundIndex === mockTournamentData.length - 1 
+                roundIndex === bracketData.rounds.length - 1 
                   ? "bg-[#b6252a] text-white border-[#b6252a]" 
                   : "bg-white text-gray-800 border-gray-200"
               }`}>
-                {roundIndex === mockTournamentData.length - 1 && (
+                {roundIndex === bracketData.rounds.length - 1 && (
                   <span className="mr-1">🏆</span>
                 )}
                 {round.name}
@@ -29,7 +31,7 @@ export default function TournamentBracket() {
             </div>
 
             {/* Render Match Cards based on Round */}
-            {roundIndex === mockTournamentData.length - 1 ? (
+            {roundIndex === bracketData.rounds.length - 1 ? (
               <div className="flex flex-col flex-grow relative w-full pt-8 min-w-[320px]">
                 {/* Grand Final Container */}
                 <div className="flex-1 flex flex-col justify-center items-center relative">
@@ -69,7 +71,7 @@ export default function TournamentBracket() {
                        const tpMatch = round.matches.find((m) => m.isThirdPlace);
                        if (!tpMatch) return null;
                        return (
-                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[100px] flex flex-col items-center">
+                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[60px] flex flex-col items-center">
                            <div className="bg-[#b6252a] text-white text-[11px] font-bold px-12 py-2.5 rounded-full uppercase shadow-md mb-6 relative z-10 tracking-widest">
                              Juara 3
                            </div>
@@ -85,7 +87,7 @@ export default function TournamentBracket() {
             ) : (
               <div className="flex flex-col flex-grow py-4">
                 {round.matches.map((match, matchIndex) => {
-                  const isLastRound = roundIndex === mockTournamentData.length - 1;
+                  const isLastRound = roundIndex === bracketData.rounds.length - 1;
                   let connectorClass = "";
                   if (!isLastRound) {
                     connectorClass = matchIndex % 2 === 0 ? "connect-down" : "connect-up";

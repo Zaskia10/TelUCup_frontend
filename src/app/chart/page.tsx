@@ -1,12 +1,45 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import BracketFilter from "@/components/bracket/BracketFilter";
 import TournamentBracket from "@/components/bracket/TournamentBracket";
-
-export const metadata = {
-  title: "Bagan Tel-U Cup",
-  description: "Bagan pertandingan Tel-U Cup",
-};
+import { getSports, getBracket } from "@/services/bracketService";
+import type { BracketData, Sport, SportCategory } from "@/types/bracket";
 
 export default function BracketPage() {
+  const [sports, setSports] = useState<Sport[]>([]);
+  const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SportCategory | null>(null);
+  const [bracketData, setBracketData] = useState<BracketData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchSports();
+  }, []);
+
+  const fetchSports = async () => {
+    try {
+      const res = await getSports();
+      setSports(res.data);
+    } catch (error) {
+      console.error("Failed to fetch sports", error);
+    }
+  };
+
+  const loadBracket = async () => {
+    if (!selectedSport) return;
+    setIsLoading(true);
+    try {
+      const res = await getBracket(selectedSport.id, selectedCategory?.id);
+      setBracketData(res.data);
+    } catch (error) {
+      console.error("Failed to fetch bracket data", error);
+      setBracketData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fffafa]">
       <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8">
@@ -28,7 +61,14 @@ export default function BracketPage() {
         </div>
 
         {/* Filters */}
-        <BracketFilter />
+        <BracketFilter 
+          sports={sports} 
+          selectedSport={selectedSport} 
+          onSportChange={(s) => { setSelectedSport(s); setSelectedCategory(null); }}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          onSearch={loadBracket}
+        />
 
         {/* Legend */}
         <div className="flex flex-wrap justify-center items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-16">
@@ -51,7 +91,18 @@ export default function BracketPage() {
         </div>
 
         {/* Bracket Container */}
-        <TournamentBracket />
+        {isLoading ? (
+          <div className="text-center text-gray-500 py-20 font-medium">Memuat bagan...</div>
+        ) : bracketData ? (
+          <TournamentBracket bracketData={bracketData} />
+        ) : (
+          <div className="text-center text-gray-400 py-20 bg-white rounded-2xl shadow-sm border border-gray-100 mt-8">
+            <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p>Silakan pilih cabang olahraga dan klik Cari untuk menampilkan bagan pertandingan.</p>
+          </div>
+        )}
 
       </main>
     </div>

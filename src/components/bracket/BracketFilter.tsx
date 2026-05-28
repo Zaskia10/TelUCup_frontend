@@ -1,6 +1,25 @@
 "use client";
 
-export default function BracketFilter() {
+import { useState } from "react";
+import type { Sport, SportCategory } from "@/types/bracket";
+
+interface BracketFilterProps {
+  sports: Sport[];
+  selectedSport: Sport | null;
+  onSportChange: (sport: Sport | null) => void;
+  selectedCategory: SportCategory | null;
+  onCategoryChange: (category: SportCategory | null) => void;
+  onSearch: () => void;
+}
+
+export default function BracketFilter({
+  sports,
+  selectedSport,
+  onSportChange,
+  selectedCategory,
+  onCategoryChange,
+  onSearch
+}: BracketFilterProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
@@ -11,11 +30,19 @@ export default function BracketFilter() {
             Cabang Olahraga
           </label>
           <div className="relative">
-            <select className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors">
-              <option>Bola Basket (Putra)</option>
-              <option>Bola Basket (Putri)</option>
-              <option>Futsal</option>
-              <option>Bulu Tangkis</option>
+            <select 
+              className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
+              value={selectedSport ? selectedSport.id : ""}
+              onChange={(e) => {
+                const sportId = parseInt(e.target.value);
+                const sport = sports.find(s => s.id === sportId) || null;
+                onSportChange(sport);
+              }}
+            >
+              <option value="">Pilih Cabang Olahraga</option>
+              {sports.map(sport => (
+                <option key={sport.id} value={sport.id}>{sport.name}</option>
+              ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,17 +52,46 @@ export default function BracketFilter() {
           </div>
         </div>
 
-        {/* Fase Turnamen */}
+        {/* Kategori */}
         <div className="md:col-span-3">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Kategori
+          </label>
+          <div className="relative">
+            <select 
+              className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors disabled:bg-gray-50 disabled:text-gray-400"
+              value={selectedCategory ? selectedCategory.id : ""}
+              onChange={(e) => {
+                if (!selectedSport) return;
+                const catId = parseInt(e.target.value);
+                const cat = selectedSport.categories.find(c => c.id === catId) || null;
+                onCategoryChange(cat);
+              }}
+              disabled={!selectedSport || selectedSport.categories.length === 0}
+            >
+              <option value="">Semua Kategori</option>
+              {selectedSport && selectedSport.categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Fase Turnamen (Placeholder) */}
+        <div className="md:col-span-2">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             Fase Turnamen
           </label>
           <div className="relative">
-            <select className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors">
-              <option>Babak Gugur (Playoffs)</option>
-              <option>Penyisihan Grup</option>
+            <select className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors disabled:bg-gray-50" disabled>
+              <option>Babak Gugur</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -43,32 +99,13 @@ export default function BracketFilter() {
           </div>
         </div>
 
-        {/* Cari Peserta */}
-        <div className="md:col-span-4">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Cari Peserta
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Ketik nama fakultas..."
-              className="w-full bg-white border border-gray-200 rounded-lg py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
-            />
-          </div>
-        </div>
-
         {/* Buttons */}
-        <div className="md:col-span-2 flex gap-2">
-          <button className="flex-1 bg-[#b6252a] hover:bg-[#9a1e22] text-white text-sm font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50">
+        <div className="md:col-span-4 flex gap-2">
+          <button 
+            className="flex-1 bg-[#b6252a] hover:bg-[#9a1e22] text-white text-sm font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
+            onClick={onSearch}
+          >
             Cari
-          </button>
-          <button className="flex-none bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
-            Reset
           </button>
         </div>
 

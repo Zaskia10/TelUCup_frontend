@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { AdminMatch, Registration } from "@/data/mockAdmin";
+import type { BracketMatch, Registration } from "@/types/bracket";
 
 interface MatchEditModalProps {
-  match: AdminMatch;
+  match: BracketMatch;
   registrations: Registration[];
   onClose: () => void;
-  onSave: (matchId: string, updates: MatchUpdates) => void;
-  onSwap: (matchId: string) => void;
+  onSave: (matchId: number, updates: MatchUpdates) => void;
+  onSwap: (matchId: number) => void;
 }
 
 export interface MatchUpdates {
@@ -35,17 +35,17 @@ export default function MatchEditModal({
   const isBye = match.status === "bye";
 
   const [teamAId, setTeamAId] = useState<number | null>(
-    match.teamA?.registrationId ?? null
+    match.team_a?.registration_id ?? null
   );
   const [teamBId, setTeamBId] = useState<number | null>(
-    match.teamB?.registrationId ?? null
+    match.team_b?.registration_id ?? null
   );
-  const [scoreA, setScoreA] = useState(match.scoreA);
-  const [scoreB, setScoreB] = useState(match.scoreB);
-  const [matchDate, setMatchDate] = useState(match.matchDate ?? "");
-  const [matchTime, setMatchTime] = useState(match.matchTime ?? "");
+  const [scoreA, setScoreA] = useState(match.score_a);
+  const [scoreB, setScoreB] = useState(match.score_b);
+  const [matchDate, setMatchDate] = useState(match.match_date ?? "");
+  const [matchTime, setMatchTime] = useState(match.match_time ?? "");
   const [location, setLocation] = useState(match.location ?? "");
-  const [refereeName, setRefereeName] = useState(match.refereeName ?? "");
+  const [refereeName, setRefereeName] = useState(match.referee_name ?? "");
   const [status, setStatus] = useState<"scheduled" | "live" | "finished">(
     match.status === "bye"
       ? "scheduled"
@@ -53,14 +53,14 @@ export default function MatchEditModal({
   );
   const [notes, setNotes] = useState(match.notes ?? "");
   const [winnerId, setWinnerId] = useState<number | null>(
-    match.winner?.registrationId ?? null
+    match.winner?.registration_id ?? null
   );
 
   const teamA = teamAId
-    ? registrations.find((r) => r.id === teamAId)
+    ? registrations.find((r) => r.id === teamAId) || match.team_a
     : null;
   const teamB = teamBId
-    ? registrations.find((r) => r.id === teamBId)
+    ? registrations.find((r) => r.id === teamBId) || match.team_b
     : null;
 
   const statusLabel: Record<string, string> = {
@@ -101,7 +101,7 @@ export default function MatchEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -109,7 +109,7 @@ export default function MatchEditModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[540px] max-h-[90vh] flex flex-col animate-[modalIn_0.25s_ease-out]">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[540px] max-h-[85vh] flex flex-col animate-[modalIn_0.25s_ease-out]">
         {/* ── Header ── */}
         <div className="px-6 pt-6 pb-4 flex items-start justify-between">
           <div>
@@ -117,7 +117,7 @@ export default function MatchEditModal({
               Detail Pertandingan
             </h2>
             <p className="text-xs text-gray-400 font-medium mt-0.5">
-              {match.roundName} · Match #{match.matchNumber}
+              {match.round_name} · Match #{match.match_number}
             </p>
           </div>
           <button
@@ -196,7 +196,7 @@ export default function MatchEditModal({
                 onChange={(e) =>
                   setTeamAId(e.target.value ? Number(e.target.value) : null)
                 }
-                disabled={isBye}
+                disabled={isBye || status === "live" || status === "finished"}
                 className="w-full text-center text-xs font-bold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 appearance-none cursor-pointer disabled:cursor-not-allowed disabled:text-gray-300 truncate"
                 title="Klik untuk ganti tim"
               >
@@ -236,7 +236,7 @@ export default function MatchEditModal({
               <button
                 type="button"
                 onClick={handleLocalSwap}
-                disabled={isBye}
+                disabled={isBye || status === "live" || status === "finished"}
                 title="Tukar posisi tim"
                 className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#b6252a] hover:border-[#b6252a]/30 hover:bg-red-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               >
@@ -272,7 +272,7 @@ export default function MatchEditModal({
                 onChange={(e) =>
                   setTeamBId(e.target.value ? Number(e.target.value) : null)
                 }
-                disabled={isBye}
+                disabled={isBye || status === "live" || status === "finished"}
                 className="w-full text-center text-xs font-bold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 appearance-none cursor-pointer disabled:cursor-not-allowed disabled:text-gray-300 truncate"
                 title="Klik untuk ganti tim"
               >
