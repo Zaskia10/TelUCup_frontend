@@ -51,11 +51,11 @@ export default function MatchCard({ match }: { match: BracketMatch }) {
         <div className="flex items-center justify-between z-10 bg-white group hover:bg-gray-50 transition-colors p-1 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 text-xs font-bold text-gray-400">
-              {match.team_a ? match.team_a.contingent.abbreviation.charAt(0) : "T"}
+              {match.team_a ? match.team_a.contingent.name.charAt(0) : "T"}
             </div>
             <div className="flex flex-col">
               <span className={`text-sm font-semibold ${!match.team_a ? "text-gray-400" : "text-gray-800"}`}>
-                {match.team_a?.contingent.abbreviation || "TBD"}
+                {match.team_a?.contingent.name || "TBD"}
               </span>
               {match.team_a && (
                 <span className="text-[10px] text-gray-400 leading-tight max-w-[120px] truncate">
@@ -77,11 +77,11 @@ export default function MatchCard({ match }: { match: BracketMatch }) {
         <div className="flex items-center justify-between z-10 bg-white group hover:bg-gray-50 transition-colors p-1 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 text-xs font-bold text-gray-400">
-              {match.team_b ? match.team_b.contingent.abbreviation.charAt(0) : "T"}
+              {match.team_b ? match.team_b.contingent.name.charAt(0) : "T"}
             </div>
             <div className="flex flex-col">
               <span className={`text-sm font-semibold ${!match.team_b ? "text-gray-400" : "text-gray-800"}`}>
-                {match.team_b?.contingent.abbreviation || "TBD"}
+                {match.team_b?.contingent.name || "TBD"}
               </span>
               {match.team_b && (
                 <span className="text-[10px] text-gray-400 leading-tight max-w-[120px] truncate">

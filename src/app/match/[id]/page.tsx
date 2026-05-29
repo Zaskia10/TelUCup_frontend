@@ -26,7 +26,7 @@ const mockMatchData = {
   teamA: {
     id: 10,
     name: "Fakultas Informatika",
-    abbreviation: "FIF",
+    name: "FIF",
     score: 0,
     players: [
       { id: 101, name: "Ahmad Dani", nim: "1301204001", position: "Captain", medicalStatus: "Hijau" },
@@ -39,7 +39,7 @@ const mockMatchData = {
   teamB: {
     id: 20,
     name: "Fakultas Rekayasa Industri",
-    abbreviation: "FRI",
+    name: "FRI",
     score: 0,
     players: [
       { id: 201, name: "Fajar Rizky", nim: "1201204001", position: "Captain", medicalStatus: "Hijau" },
@@ -107,9 +107,9 @@ export default function MatchDetailPage() {
             {/* Team A */}
             <div className="flex flex-col items-center flex-1 w-full max-w-[200px]">
               <div className="w-24 h-24 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-3xl font-black text-gray-400 mb-4">
-                {match.teamA.abbreviation}
+                {match.teamA.name}
               </div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">{match.teamA.abbreviation}</h2>
+              <h2 className="text-xl font-bold text-gray-800 text-center">{match.teamA.name}</h2>
               <p className="text-sm text-gray-500 text-center mt-1">{match.teamA.name}</p>
             </div>
 
@@ -130,9 +130,9 @@ export default function MatchDetailPage() {
             {/* Team B */}
             <div className="flex flex-col items-center flex-1 w-full max-w-[200px]">
               <div className="w-24 h-24 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-3xl font-black text-gray-400 mb-4">
-                {match.teamB.abbreviation}
+                {match.teamB.name}
               </div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">{match.teamB.abbreviation}</h2>
+              <h2 className="text-xl font-bold text-gray-800 text-center">{match.teamB.name}</h2>
               <p className="text-sm text-gray-500 text-center mt-1">{match.teamB.name}</p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function MatchDetailPage() {
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
               <h3 className="font-bold text-gray-800 flex items-center gap-2">
                 <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
-                Daftar Pemain {match.teamA.abbreviation}
+                Daftar Pemain {match.teamA.name}
               </h3>
               <span className="text-xs font-bold text-gray-500 bg-gray-200 px-2.5 py-1 rounded-full">
                 {match.teamA.players.length} Pemain
@@ -208,7 +208,7 @@ export default function MatchDetailPage() {
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
               <h3 className="font-bold text-gray-800 flex items-center gap-2">
                 <div className="w-2 h-6 bg-red-500 rounded-full"></div>
-                Daftar Pemain {match.teamB.abbreviation}
+                Daftar Pemain {match.teamB.name}
               </h3>
               <span className="text-xs font-bold text-gray-500 bg-gray-200 px-2.5 py-1 rounded-full">
                 {match.teamB.players.length} Pemain

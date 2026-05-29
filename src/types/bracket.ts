@@ -17,7 +17,6 @@ export interface Sport {
 export interface Contingent {
   id: number;
   name: string;
-  abbreviation: string;
 }
 
 export interface Player {
@@ -73,4 +72,6 @@ export interface BracketData {
   sport_category: SportCategory | null;
   total_rounds: number;
   rounds: BracketRound[];
+  third_place_match?: BracketMatch | null;
+  results?: any;
 }

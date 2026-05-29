@@ -83,51 +83,12 @@ export default function KelolaBaganPage() {
     try {
       const res = await getBracket(selectedSport.id, selectedCategory?.id);
       
-      // Inject dummy "Perebutan Juara 3" match to the frontend if not returned by backend
+      // Inject real "Perebutan Juara 3" match to the frontend from backend data
       const bracket: BracketData = res.data;
-      if (bracket && bracket.rounds && bracket.rounds.length > 0) {
+      if (bracket && bracket.rounds && bracket.rounds.length > 0 && bracket.third_place_match) {
         const lastRound = bracket.rounds[bracket.rounds.length - 1];
-        if (!lastRound.matches.some((m) => m.isThirdPlace)) {
-          // Find grand final match to get its info
-          const gfMatch = lastRound.matches[0];
-          // Determine 3rd place teams from semifinals (round before last)
-          const semiFinals = bracket.rounds.length >= 2 ? bracket.rounds[bracket.rounds.length - 2] : null;
-          let team3A = null;
-          let team3B = null;
-
-          if (semiFinals && semiFinals.matches.length >= 2) {
-            const sf1 = semiFinals.matches[0];
-            const sf2 = semiFinals.matches[1];
-            
-            if (sf1.status === 'finished' && sf1.winner && sf1.team_a && sf1.team_b) {
-              team3A = sf1.winner.registration_id === sf1.team_a.registration_id ? sf1.team_b : sf1.team_a;
-            }
-            if (sf2.status === 'finished' && sf2.winner && sf2.team_a && sf2.team_b) {
-              team3B = sf2.winner.registration_id === sf2.team_a.registration_id ? sf2.team_b : sf2.team_a;
-            }
-          }
-
-          lastRound.matches.push({
-            id: 999999, // Fake ID for 3rd place match
-            round: lastRound.round,
-            round_name: "Juara 3",
-            match_number: lastRound.matches.length + 1,
-            status: "scheduled",
-            match_date: null,
-            match_time: null,
-            location: null,
-            referee_name: null,
-            notes: null,
-            score_a: 0,
-            score_b: 0,
-            team_a: team3A,
-            team_b: team3B,
-            winner: null,
-            next_match_id: null,
-            next_match_slot: null,
-            isThirdPlace: true,
-          } as BracketMatch);
-        }
+        bracket.third_place_match.isThirdPlace = true;
+        lastRound.matches.push(bracket.third_place_match);
       }
       
       setBracketData(bracket);
@@ -254,30 +215,46 @@ export default function KelolaBaganPage() {
 
   const handleSaveMatch = async (matchId: number, updates: MatchUpdates) => {
     try {
-      // 1. Update Schedule & Info
-      await updateMatchSchedule(matchId, {
-        match_date: updates.matchDate,
-        match_time: updates.matchTime,
-        location: updates.location,
-        referee_name: updates.refereeName,
-        notes: updates.notes
-      });
+      // 1. Update Schedule & Info (only if changed)
+      if (
+        updates.matchDate !== (editingMatch?.match_date ?? "") ||
+        updates.matchTime !== (editingMatch?.match_time ?? "") ||
+        updates.location !== (editingMatch?.location ?? "") ||
+        updates.refereeName !== (editingMatch?.referee_name ?? "") ||
+        updates.notes !== (editingMatch?.notes ?? "")
+      ) {
+        await updateMatchSchedule(matchId, {
+          match_date: updates.matchDate,
+          match_time: updates.matchTime,
+          location: updates.location,
+          referee_name: updates.refereeName,
+          notes: updates.notes
+        });
+      }
 
-      // 2. Update Teams
-      await setMatchTeams(matchId, {
-        registration_a_id: updates.registrationAId,
-        registration_b_id: updates.registrationBId
-      });
+      // 2. Update Teams (Only if changed)
+      const originalTeamAId = editingMatch?.team_a?.registration_id ?? null;
+      const originalTeamBId = editingMatch?.team_b?.registration_id ?? null;
+      
+      if (updates.registrationAId !== originalTeamAId || updates.registrationBId !== originalTeamBId) {
+        await setMatchTeams(matchId, {
+          registration_a_id: updates.registrationAId,
+          registration_b_id: updates.registrationBId
+        });
+      }
 
-      // 3. Update Status
-      await setMatchStatus(matchId, { status: updates.status });
-
-      // 4. Update Score
-      await updateMatchScore(matchId, {
-        score_a: updates.scoreA,
-        score_b: updates.scoreB,
-        winner_registration_id: updates.winnerId
-      });
+      // 3 & 4. Update Score and Status
+      if (updates.status === "finished") {
+        // backend updateScore also sets status to 'finished', so we only need to call this one
+        await updateMatchScore(matchId, {
+          score_a: updates.scoreA,
+          score_b: updates.scoreB,
+          winner_registration_id: updates.winnerId
+        });
+      } else if (updates.status !== editingMatch?.status) {
+        // Only update status if it changed (and is not 'finished')
+        await setMatchStatus(matchId, { status: updates.status });
+      }
 
       await loadBracket();
       setEditingMatch(null);
@@ -296,16 +273,8 @@ export default function KelolaBaganPage() {
   ) => {
     if (!bracketData) return;
 
-    // Reject drop to/from the dummy 3rd place match
-    if (targetMatchId === 999999 || sourceMatchId === 999999) {
-      showToast("Tidak bisa memindahkan tim pada perebutan juara 3 secara manual", "error");
-      return;
-    }
-
     try {
-      // Very naive implementation of drag & drop. Ideally backend should have a /swap-slots endpoint.
-      // For now, we update the teams of target and source match via API.
-      // We will need to re-fetch the bracket.
+      showToast("Sedang memindahkan tim...", "info");
       
       const findMatch = (data: BracketData, matchId: number): BracketMatch | null => {
         for (const round of data.rounds) {
@@ -323,16 +292,17 @@ export default function KelolaBaganPage() {
       const srcTeam = sourceSlot === "a" ? srcMatch.team_a : srcMatch.team_b;
       const tgtTeam = targetSlot === "a" ? tgtMatch.team_a : tgtMatch.team_b;
 
-      // Swap teams
-      await setMatchTeams(targetMatchId, {
-        registration_a_id: targetSlot === "a" ? srcTeam?.registration_id : tgtMatch.team_a?.registration_id,
-        registration_b_id: targetSlot === "b" ? srcTeam?.registration_id : tgtMatch.team_b?.registration_id
-      });
-
-      await setMatchTeams(sourceMatchId, {
-        registration_a_id: sourceSlot === "a" ? tgtTeam?.registration_id : srcMatch.team_a?.registration_id,
-        registration_b_id: sourceSlot === "b" ? tgtTeam?.registration_id : srcMatch.team_b?.registration_id
-      });
+      // Execute both swap updates concurrently since they are different match records
+      await Promise.all([
+        setMatchTeams(targetMatchId, {
+          ...(targetSlot === "a" ? { registration_a_id: srcTeam?.registration_id ?? null } : {}),
+          ...(targetSlot === "b" ? { registration_b_id: srcTeam?.registration_id ?? null } : {})
+        }),
+        setMatchTeams(sourceMatchId, {
+          ...(sourceSlot === "a" ? { registration_a_id: tgtTeam?.registration_id ?? null } : {}),
+          ...(sourceSlot === "b" ? { registration_b_id: tgtTeam?.registration_id ?? null } : {})
+        })
+      ]);
 
       await loadBracket();
       showToast("Tim berhasil dipindahkan!", "success");

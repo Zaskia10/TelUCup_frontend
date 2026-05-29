@@ -75,20 +75,27 @@ export default function MatchEditModal({
     finished: "bg-gray-700 text-white border-gray-700",
   };
 
-  const handleSave = () => {
-    onSave(match.id, {
-      registrationAId: teamAId,
-      registrationBId: teamBId,
-      scoreA,
-      scoreB,
-      matchDate,
-      matchTime,
-      location,
-      refereeName,
-      status,
-      notes,
-      winnerId,
-    });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await Promise.resolve(onSave(match.id, {
+        registrationAId: teamAId,
+        registrationBId: teamBId,
+        scoreA,
+        scoreB,
+        matchDate,
+        matchTime,
+        location,
+        refereeName,
+        status,
+        notes,
+        winnerId,
+      }));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLocalSwap = () => {
@@ -189,7 +196,7 @@ export default function MatchEditModal({
                     : "bg-gray-50 border-gray-200 text-gray-300"
                 }`}
               >
-                {teamA ? teamA.contingent.abbreviation.charAt(0) : "?"}
+                {teamA ? teamA.contingent.name.charAt(0) : "?"}
               </div>
               <select
                 value={teamAId ?? ""}
@@ -203,7 +210,7 @@ export default function MatchEditModal({
                 <option value="">TBD</option>
                 {registrations.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.contingent.abbreviation}
+                    {r.contingent.name}
                   </option>
                 ))}
               </select>
@@ -265,7 +272,7 @@ export default function MatchEditModal({
                     : "bg-gray-50 border-gray-200 text-gray-300"
                 }`}
               >
-                {teamB ? teamB.contingent.abbreviation.charAt(0) : "?"}
+                {teamB ? teamB.contingent.name.charAt(0) : "?"}
               </div>
               <select
                 value={teamBId ?? ""}
@@ -279,7 +286,7 @@ export default function MatchEditModal({
                 <option value="">TBD</option>
                 {registrations.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.contingent.abbreviation}
+                    {r.contingent.name}
                   </option>
                 ))}
               </select>
@@ -306,7 +313,7 @@ export default function MatchEditModal({
                       : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {teamA ? teamA.contingent.abbreviation : "Tim A"}
+                  {teamA ? teamA.contingent.name : "Tim A"}
                 </button>
                 <button
                   type="button"
@@ -329,7 +336,7 @@ export default function MatchEditModal({
                       : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {teamB ? teamB.contingent.abbreviation : "Tim B"}
+                  {teamB ? teamB.contingent.name : "Tim B"}
                 </button>
               </div>
             </div>
@@ -522,28 +529,40 @@ export default function MatchEditModal({
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Check-in ke Verifikasi Lapangan
+            Check-in Pemain
           </a>
           <button
             type="button"
             onClick={handleSave}
-            disabled={isBye}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+            disabled={isBye || isSaving}
+            className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md min-w-[140px]"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            Simpan
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Simpan
+              </>
+            )}
           </button>
         </div>
       </div>

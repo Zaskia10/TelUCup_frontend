@@ -47,7 +47,7 @@ export default function PanitiaDashboardLayout({
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/panitia" },
     { name: "Verifikasi Pendaftaran Tim", icon: FileText, href: "/dashboard/panitia/verifikasi-tim" },
-    { name: "Bagan, Pertandingan & Verifikasi Lapangan", icon: Trophy, href: "/dashboard/panitia/pertandingan" },
+    { name: "Bagan, Pertandingan & Verifikasi Lapangan", icon: Trophy, href: "/dashboard/panitia/kelola-bagan" },
     { name: "Tinjauan Medis (Self-Assessment)", icon: Stethoscope, href: "/dashboard/panitia/medis" },
     { name: "Kelola Galeri Event", icon: Camera, href: "/dashboard/panitia/galeri" },
     { name: "Kelola Kontingen & Pengguna", icon: Users, href: "/dashboard/panitia/kontingen" },

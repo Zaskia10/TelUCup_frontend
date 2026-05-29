@@ -52,10 +52,10 @@ export default function BracketFilter({
           </div>
         </div>
 
-        {/* Kategori */}
+        {/* Sub-Kategori */}
         <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Kategori
+            Sub-Kategori
           </label>
           <div className="relative">
             <select 
@@ -69,7 +69,7 @@ export default function BracketFilter({
               }}
               disabled={!selectedSport || selectedSport.categories.length === 0}
             >
-              <option value="">Semua Kategori</option>
+              <option value="">Semua Sub-Kategori</option>
               {selectedSport && selectedSport.categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
@@ -82,25 +82,8 @@ export default function BracketFilter({
           </div>
         </div>
 
-        {/* Fase Turnamen (Placeholder) */}
-        <div className="md:col-span-2">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Fase Turnamen
-          </label>
-          <div className="relative">
-            <select className="w-full appearance-none bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors disabled:bg-gray-50" disabled>
-              <option>Babak Gugur</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
         {/* Buttons */}
-        <div className="md:col-span-4 flex gap-2">
+        <div className="md:col-span-6 flex gap-2">
           <button 
             className="flex-1 bg-[#b6252a] hover:bg-[#9a1e22] text-white text-sm font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
             onClick={onSearch}

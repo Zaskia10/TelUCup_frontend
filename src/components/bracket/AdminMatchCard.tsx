@@ -113,7 +113,7 @@ export default function AdminMatchCard({
         <DraggableTeamRow
           matchId={match.id}
           slot="a"
-          name={match.team_a?.contingent.abbreviation ?? "TBD"}
+          name={match.team_a?.contingent.name ?? "TBD"}
           fullName={match.team_a?.contingent.name}
           score={match.status === "bye" ? null : match.score_a}
           isWinner={
@@ -130,7 +130,7 @@ export default function AdminMatchCard({
         <DraggableTeamRow
           matchId={match.id}
           slot="b"
-          name={match.team_b?.contingent.abbreviation ?? "TBD"}
+          name={match.team_b?.contingent.name ?? "TBD"}
           fullName={match.team_b?.contingent.name}
           score={match.status === "bye" ? null : match.score_b}
           isWinner={
