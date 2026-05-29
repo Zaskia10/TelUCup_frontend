@@ -9,6 +9,15 @@ const getHeaders = () => {
   };
 };
 
+export const getMyContingent = async () => {
+  const response = await fetch(`${API_URL}/contingents/my`, {
+    headers: getHeaders(),
+  });
+  const resData = await response.json();
+  if (!response.ok) throw new Error(resData.message || "Gagal mengambil data kontingen");
+  return resData;
+};
+
 export const getMyContingentPlayers = async () => {
   const response = await fetch(`${API_URL}/contingents/my/players`, {
     headers: getHeaders(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Users, 
@@ -10,91 +10,165 @@ import {
   Building2,
   UserPlus,
   Trophy,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 
-// --- MOCK DATA ---
-const kontingenInfo = {
-  name: "Fakultas Informatika (FIF)",
-  picName: "Budi Santoso",
-  contact: "081234567890",
-};
-
-const quickStats = [
-  { 
-    label: "Total Anggota", 
-    value: "45", 
-    subtext: "Pemain terdaftar", 
-    icon: Users, 
-    bgColor: "bg-blue-50", 
-    textColor: "text-blue-600",
-    border: "border-gray-100" 
-  },
-  { 
-    label: "Tim Terdaftar", 
-    value: "5", 
-    subtext: "Dari 8 cabang olahraga", 
-    icon: Building2, 
-    bgColor: "bg-purple-50", 
-    textColor: "text-purple-600",
-    border: "border-gray-100" 
-  },
-  { 
-    label: "Pertandingan Hari Ini", 
-    value: "2", 
-    subtext: "Jadwal aktif", 
-    icon: Swords, 
-    bgColor: "bg-emerald-50", 
-    textColor: "text-emerald-600",
-    border: "border-gray-100" 
-  },
-  { 
-    label: "Menunggu Verifikasi", 
-    value: "1", 
-    subtext: "Tim perlu ditinjau", 
-    icon: Clock, 
-    bgColor: "bg-orange-50", 
-    textColor: "text-orange-600",
-    border: "border-orange-200 ring-1 ring-orange-100 shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
-  },
-];
-
-const todayMatches = [
-  {
-    id: 1,
-    teamA: "FIF",
-    teamB: "FRI",
-    time: "10:00 WIB",
-    venue: "Lapangan Basket T-Rex",
-    sport: "Basket Putra"
-  },
-  {
-    id: 2,
-    teamA: "FIF",
-    teamB: "FTE",
-    time: "14:00 WIB",
-    venue: "Gedung Tarung Derajat",
-    sport: "Futsal Putra"
-  }
-];
-
-const teamRegistrations = [
-  { id: 1, sport: "Basket Putra", status: "Terverifikasi", players: 12 },
-  { id: 2, sport: "Futsal Putra", status: "Terverifikasi", players: 10 },
-  { id: 3, sport: "Voli Campuran", status: "Menunggu Verifikasi", players: 6 },
-];
+import { getMyContingent } from "@/services/contingentService";
+import { getTodayMatches } from "@/services/matchService";
+import { getMyRegistrations } from "@/services/registrationService";
 
 export default function PICKontingenDashboardOverview() {
-  const [matches] = useState(todayMatches);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  
+  const [kontingenInfo, setKontingenInfo] = useState({
+    name: "Memuat...",
+    picName: "Memuat...",
+    email: "-",
+  });
+
+  const [matches, setMatches] = useState<any[]>([]);
+  const [teamRegistrations, setTeamRegistrations] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    playersCount: 0,
+    teamsCount: 0,
+    todayMatchesCount: 0,
+    waitingVerificationCount: 0
+  });
+
+  const formatStatus = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "verified": return "Terverifikasi";
+      case "submitted": return "Menunggu Verifikasi";
+      case "pending": return "Menunggu Verifikasi";
+      case "draft": return "Draft";
+      case "rejected": return "Ditolak";
+      default: return "Draft";
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [contingentRes, matchesRes, registrationsRes] = await Promise.all([
+          getMyContingent(),
+          getTodayMatches(),
+          getMyRegistrations().catch(() => ({ data: [] })) // Fallback jika gagal
+        ]);
+        
+        const contingentData = contingentRes.data || contingentRes; // Just in case it's not wrapped in data
+        setKontingenInfo({
+          name: contingentData.name || "Nama Kontingen",
+          picName: contingentData.pic?.name || "-",
+          email: contingentData.pic?.email || "-",
+        });
+        
+        const matchesData = matchesRes.data || [];
+        setMatches(matchesData.map((m: any) => ({
+          id: m.id,
+          teamA: m.team_a?.contingent?.name || "Tim A",
+          teamB: m.team_b?.contingent?.name || "Tim B",
+          time: m.match_time || "-",
+          venue: m.location || "-",
+          sport: "Cabang Olahraga" // Placeholder until backend provides sport_name
+        })));
+
+        const registrationsData = registrationsRes.data || [];
+        const formattedRegistrations = registrationsData.map((r: any) => ({
+          id: r.id,
+          sport: `${r.sport?.name || ""} - ${r.sport_category?.name || ""}`,
+          status: formatStatus(r.status),
+          players: r.current_members || 0
+        }));
+        setTeamRegistrations(formattedRegistrations);
+
+        const waitingCount = formattedRegistrations.filter(
+          (r: any) => r.status === "Menunggu Verifikasi"
+        ).length;
+        
+        setStats({
+          playersCount: contingentData.players_count || 0,
+          teamsCount: registrationsData.length || 0,
+          todayMatchesCount: matchesData.length || 0,
+          waitingVerificationCount: waitingCount
+        });
+        
+      } catch (err: any) {
+        setError(err.message || "Terjadi kesalahan saat mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  const quickStats = [
+    { 
+      label: "Total Anggota", 
+      value: stats.playersCount.toString(), 
+      subtext: "Pemain terdaftar", 
+      icon: Users, 
+      bgColor: "bg-blue-50", 
+      textColor: "text-blue-600",
+      border: "border-gray-100" 
+    },
+    { 
+      label: "Tim Terdaftar", 
+      value: stats.teamsCount.toString(), 
+      subtext: "Dari semua cabang olahraga", 
+      icon: Building2, 
+      bgColor: "bg-purple-50", 
+      textColor: "text-purple-600",
+      border: "border-gray-100" 
+    },
+    { 
+      label: "Pertandingan Hari Ini", 
+      value: stats.todayMatchesCount.toString(), 
+      subtext: "Jadwal aktif", 
+      icon: Swords, 
+      bgColor: "bg-emerald-50", 
+      textColor: "text-emerald-600",
+      border: "border-gray-100" 
+    },
+    { 
+      label: "Menunggu Verifikasi", 
+      value: stats.waitingVerificationCount.toString(), 
+      subtext: "Tim perlu ditinjau", 
+      icon: Clock, 
+      bgColor: "bg-orange-50", 
+      textColor: "text-orange-600",
+      border: "border-orange-200 ring-1 ring-orange-100 shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
+    },
+  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Terverifikasi": return "bg-green-100 text-green-700 border-green-200";
       case "Menunggu Verifikasi": return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "Ditolak": return "bg-red-100 text-red-700 border-red-200";
       case "Draft": return "bg-gray-100 text-gray-700 border-gray-200";
       default: return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="animate-spin text-[#b71c1c]" size={48} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <p className="text-red-500 font-medium">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -217,8 +291,8 @@ export default function PICKontingenDashboardOverview() {
                   <p className="font-medium text-gray-700">{kontingenInfo.picName}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Kontak</p>
-                  <p className="font-medium text-gray-700">{kontingenInfo.contact}</p>
+                  <p className="text-xs text-gray-400">Email</p>
+                  <p className="font-medium text-gray-700">{kontingenInfo.email}</p>
                 </div>
              </div>
           </div>
