@@ -26,7 +26,6 @@ const mockMatchData = {
   teamA: {
     id: 10,
     name: "Fakultas Informatika",
-    name: "FIF",
     score: 0,
     players: [
       { id: 101, name: "Ahmad Dani", nim: "1301204001", position: "Captain", medicalStatus: "Hijau" },
@@ -39,7 +38,6 @@ const mockMatchData = {
   teamB: {
     id: 20,
     name: "Fakultas Rekayasa Industri",
-    name: "FRI",
     score: 0,
     players: [
       { id: 201, name: "Fajar Rizky", nim: "1201204001", position: "Captain", medicalStatus: "Hijau" },

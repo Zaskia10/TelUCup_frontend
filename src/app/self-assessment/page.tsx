@@ -1,8 +1,43 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, useEffect, FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementModal from "@/components/modal/AnnouncementModal";
+import { getQuestionnaire } from "@/services/selfAssessmentService";
+import { Loader2 } from "lucide-react";
+
+// Types
+type QuestionType = "number" | "single_choice" | "boolean" | "open_text" | "scale" | "multi_choice";
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface QuestionDef {
+  code: string;
+  type: QuestionType;
+  text: string;
+  min?: number;
+  max?: number;
+  required?: boolean;
+  options?: Option[];
+  notes?: string;
+}
+
+interface Section {
+  domain: string;
+  title: string;
+  description: string;
+  questions: QuestionDef[];
+}
+
+interface QuestionnaireData {
+  version: string;
+  disclaimer: string;
+  sections: Section[];
+  estimated_duration_minutes: number;
+}
 
 function SectionCard({
   title,
@@ -14,24 +49,22 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm mb-6 transition-all hover:shadow-md">
       <div className="mb-5 flex items-start gap-3">
         <div className="mt-1 flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-sm font-bold text-[#B41F2A]">
           ◉
         </div>
-
         <div>
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
         </div>
       </div>
-
       <div className="space-y-6">{children}</div>
     </section>
   );
 }
 
-function Question({
+function QuestionBox({
   number,
   text,
   children,
@@ -43,558 +76,323 @@ function Question({
   required?: boolean;
 }) {
   return (
-    <div className="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
-      <div className="mb-3 flex items-start justify-between gap-4">
-        <p className="text-sm font-semibold text-gray-900">
-          {number && <span className="mr-1">{number}.</span>}
+    <div className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <p className="text-sm font-semibold text-gray-900 leading-relaxed">
+          {number && <span className="mr-2 text-gray-500">{number}.</span>}
           {text}
           {required && <span className="ml-1 text-[#B41F2A]">*</span>}
         </p>
-
         {required && (
-          <span className="shrink-0 rounded-full bg-red-50 px-2 py-1 text-[10px] font-semibold text-[#B41F2A]">
-            WAJIB DIISI
+          <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-[#B41F2A] tracking-wider uppercase">
+            Wajib
           </span>
         )}
       </div>
-
       {children}
     </div>
   );
 }
 
-function RadioGroup({
-  name,
-  options,
-}: {
-  name: string;
-  options: string[];
-}) {
-  return (
-    <div className="flex flex-wrap gap-5">
-      {options.map((option) => (
-        <label
-          key={option}
-          className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
-        >
-          <input
-            type="radio"
-            name={name}
-            value={option}
-            className="h-4 w-4 accent-[#B41F2A]"
-          />
-          {option}
-        </label>
-      ))}
-    </div>
-  );
-}
-
-function TextInput({
-  placeholder = "Tulis jawaban Anda",
-  disabled = false,
-}: {
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <input
-      type="text"
-      placeholder={placeholder}
-      disabled={disabled}
-      className="mt-3 w-full rounded-md border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-[#B41F2A] disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-    />
-  );
-}
-
-function ConditionalCheckboxQuestion({
-  radioName,
-  checkboxName,
-  options,
-  helperText,
-  otherPlaceholder = "Jika lainnya, sebutkan singkat",
-}: {
-  radioName: string;
-  checkboxName: string;
-  options: string[];
-  helperText?: string;
-  otherPlaceholder?: string;
-}) {
-  const [answer, setAnswer] = useState("");
-  const [isOtherChecked, setIsOtherChecked] = useState(false);
-
-  const isDisabled = answer !== "Ya";
-
-  return (
-    <>
-      <div className="flex flex-wrap gap-5">
-        {["Ya", "Tidak"].map((option) => (
-          <label
-            key={option}
-            className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
-          >
-            <input
-              type="radio"
-              name={radioName}
-              value={option}
-              checked={answer === option}
-              onChange={(event) => {
-                setAnswer(event.target.value);
-
-                if (event.target.value !== "Ya") {
-                  setIsOtherChecked(false);
-                }
-              }}
-              className="h-4 w-4 accent-[#B41F2A]"
-            />
-            {option}
-          </label>
-        ))}
-      </div>
-
-      {helperText && (
-        <p className="mt-4 text-xs font-semibold uppercase text-gray-500">
-          {helperText}
-        </p>
-      )}
-
-      <div
-        className={`mt-3 grid gap-3 rounded-lg p-4 sm:grid-cols-2 md:grid-cols-3 ${
-          isDisabled ? "bg-gray-100 opacity-60" : "bg-gray-50"
-        }`}
-      >
-        {options.map((option) => {
-          const isOther = option.toLowerCase() === "lainnya";
-
-          return (
-            <label
-              key={option}
-              className={`flex items-center gap-2 text-sm text-gray-700 ${
-                isDisabled ? "cursor-not-allowed" : "cursor-pointer"
-              }`}
-            >
-              <input
-                type="checkbox"
-                name={checkboxName}
-                value={option}
-                disabled={isDisabled}
-                checked={isOther ? isOtherChecked : undefined}
-                onChange={(event) => {
-                  if (isOther) {
-                    setIsOtherChecked(event.target.checked);
-                  }
-                }}
-                className="h-4 w-4 accent-[#B41F2A] disabled:cursor-not-allowed"
-              />
-              {option}
-            </label>
-          );
-        })}
-      </div>
-
-      <TextInput
-        disabled={isDisabled || !isOtherChecked}
-        placeholder={otherPlaceholder}
-      />
-    </>
-  );
-}
-
-function PainLevelQuestion() {
-  const [hasPain, setHasPain] = useState("");
-  const [painLevel, setPainLevel] = useState(0);
-
-  const isDisabled = hasPain !== "Ya";
-
-  const painStatus =
-    painLevel <= 3
-      ? "NYERI RINGAN"
-      : painLevel <= 6
-      ? "NYERI SEDANG"
-      : "NYERI BERAT";
-
-  return (
-    <>
-      <div className="flex flex-wrap gap-5">
-        {["Ya", "Tidak"].map((option) => (
-          <label
-            key={option}
-            className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
-          >
-            <input
-              type="radio"
-              name="nyeri-saat-ini"
-              value={option}
-              checked={hasPain === option}
-              onChange={(event) => {
-                setHasPain(event.target.value);
-
-                if (event.target.value !== "Ya") {
-                  setPainLevel(0);
-                }
-              }}
-              className="h-4 w-4 accent-[#B41F2A]"
-            />
-            {option}
-          </label>
-        ))}
-      </div>
-
-      <div
-        className={`mt-5 rounded-lg border border-gray-100 p-5 ${
-          isDisabled ? "bg-gray-100 opacity-60" : "bg-gray-50"
-        }`}
-      >
-        <p className="text-xs font-semibold uppercase text-gray-500">
-          Status nyeri
-        </p>
-
-        <div className="mt-2 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-lg font-extrabold text-[#B41F2A]">
-              {painStatus}
-            </p>
-
-            <p className="mt-2 text-sm font-semibold text-gray-800">
-              Jika ya, seberapa parah nyeri Anda saat ini?
-            </p>
-          </div>
-
-          <div className="text-4xl font-extrabold text-[#B41F2A]">
-            {painLevel}
-            <span className="text-base text-gray-400">/10</span>
-          </div>
-        </div>
-
-        <input
-          type="range"
-          min="0"
-          max="10"
-          value={painLevel}
-          disabled={isDisabled}
-          onChange={(event) => setPainLevel(Number(event.target.value))}
-          className="mt-5 w-full accent-[#B41F2A] disabled:cursor-not-allowed"
-        />
-
-        <div className="mt-2 flex justify-between text-[10px] font-semibold uppercase text-gray-400">
-          <span>Tidak nyeri</span>
-          <span>Nyeri berat</span>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export default function SelfAssessmentPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [data, setData] = useState<QuestionnaireData | null>(null);
+  
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+
+  useEffect(() => {
+    const fetchQ = async () => {
+      try {
+        setLoading(true);
+        const res = await getQuestionnaire();
+        setData(res.data || res);
+      } catch (err: any) {
+        setError(err.message || "Gagal memuat pertanyaan self-assessment");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQ();
+  }, []);
+
+  const handleChange = (code: string, value: any) => {
+    setAnswers(prev => ({ ...prev, [code]: value }));
+  };
+
+  const handleMultiChoiceChange = (code: string, optionValue: string, checked: boolean) => {
+    setAnswers(prev => {
+      const current = Array.isArray(prev[code]) ? prev[code] : [];
+      if (checked) {
+        return { ...prev, [code]: [...current, optionValue] };
+      } else {
+        return { ...prev, [code]: current.filter((v: string) => v !== optionValue) };
+      }
+    });
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    console.log("Answers Payload:", answers);
+    // TODO: Connect to submit API when available
     setShowAnnouncementModal(true);
   };
 
   const handleResetForm = () => {
-    window.location.reload();
+    if (confirm("Apakah Anda yakin ingin mereset semua jawaban?")) {
+      setAnswers({});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#f4f7f6]">
+        <div className="text-center">
+          <Loader2 className="mx-auto mb-4 animate-spin text-[#b71c1c]" size={40} />
+          <p className="text-sm font-medium text-gray-500">Memuat formulir...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#f4f7f6]">
+        <div className="bg-white p-8 rounded-xl shadow-sm text-center border border-gray-200">
+          <div className="w-16 h-16 bg-red-50 text-red-500 flex items-center justify-center rounded-full mx-auto mb-4">
+            <span className="text-2xl font-bold">!</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-800 mb-2">Gagal Memuat</h2>
+          <p className="text-gray-500 mb-6">{error || "Data kuesioner tidak ditemukan"}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-[#b71c1c] text-white rounded-lg font-medium hover:bg-[#9b1818] transition-colors"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  let questionCounter = 1;
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-4xl px-5 py-12">
-        <header className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            Self Assessment Kesehatan Pemain
-          </h1>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-            Isi kondisi kesehatan Anda dengan jujur untuk memastikan keselamatan
-            selama sesi latihan dan pertandingan.
-          </p>
-
-          <div className="mt-5 flex flex-wrap gap-4">
-            <span className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-500 shadow-sm">
-              <span className="text-[#B41F2A]">◷</span>
-              Perkiraan: 3-6 menit
-            </span>
-
-            <span className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-500 shadow-sm">
-              <span className="text-[#B41F2A]">♙</span>
-              Data Rahasia & Terenkripsi
-            </span>
+    <main className="min-h-screen bg-[#f4f7f6]">
+      <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8 lg:py-10">
+        <header className="mb-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+              Self Assessment <span className="text-[#B41F2A]">Kesehatan</span>
+            </h1>
+            <p className="mt-4 text-sm leading-relaxed text-gray-600 max-w-2xl bg-gray-50 p-4 rounded-lg border border-gray-100">
+              {data.disclaimer}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-sm">
+                <span className="text-[#B41F2A] font-bold">◷</span>
+                Durasi: {data.estimated_duration_minutes} menit
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-sm">
+                <span className="text-[#B41F2A] font-bold">🔒</span>
+                Data Rahasia & Terenkripsi
+              </span>
+            </div>
           </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <SectionCard
-            title="Bagian A — Kondisi Dasar"
-            subtitle="Kondisi kesehatan umum dan nyeri anggota badan."
-          >
-            <Question text="Pernah didiagnosis masalah jantung atau kondisi yang membatasi aktivitas fisik?">
-              <RadioGroup
-                name="diagnosis-jantung"
-                options={["Ya", "Tidak"]}
-              />
-            </Question>
-
-            <Question text="Pernah merasa nyeri dada saat beraktivitas fisik?">
-              <RadioGroup name="nyeri-dada" options={["Ya", "Tidak"]} />
-            </Question>
-
-            <Question text="Dalam 1 bulan terakhir, pernah pusing/nyaris pingsan/turun kesadaran saat beraktivitas?">
-              <RadioGroup name="pusing-pingsan" options={["Ya", "Tidak"]} />
-            </Question>
-
-            <Question text="Apakah Anda memiliki kondisi kesehatan lain yang menghambat aktivitas fisik?">
-              <ConditionalCheckboxQuestion
-                radioName="kondisi-kesehatan-lain"
-                checkboxName="jenis-kondisi-kesehatan"
-                helperText="Pilih kondisi yang paling sesuai"
-                options={[
-                  "Pernapasan",
-                  "Jantung",
-                  "Sendi/tulang",
-                  "Neurologis",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-          </SectionCard>
-
-          <SectionCard
-            title="Bagian B — Riwayat Cedera"
-            subtitle="Informasi mengenai cedera fisik dalam 12 bulan terakhir."
-          >
-            <Question
-              number={1}
-              text="Pernah mengalami cedera otot, sendi, ligamen, atau tulang dalam 12 bulan terakhir?"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {data.sections.map((section) => (
+            <SectionCard
+              key={section.domain}
+              title={`Bagian ${section.domain} — ${section.title}`}
+              subtitle={section.description}
             >
-              <ConditionalCheckboxQuestion
-                radioName="pernah-cedera-12-bulan"
-                checkboxName="bagian-tubuh-cedera"
-                helperText="Bagian tubuh yang pernah cedera"
-                options={[
-                  "Lutut",
-                  "Pergelangan kaki",
-                  "Paha",
-                  "Punggung",
-                  "Bahu",
-                  "Siku",
-                  "Pergelangan tangan",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-
-            <Question
-              number={2}
-              text="Jika ya, apakah cedera tersebut pernah kambuh lebih dari satu kali?"
-            >
-              <RadioGroup name="cedera-kambuh" options={["Ya", "Tidak"]} />
-            </Question>
-
-            <Question
-              number={3}
-              text="Apakah cedera tersebut masih terasa sampai sekarang?"
-            >
-              <RadioGroup
-                name="cedera-masih-terasa"
-                options={["Ya", "Tidak"]}
-              />
-            </Question>
-
-            <Question
-              number={4}
-              text="Apakah Anda pernah mengalami cedera ACL pada salah satu lutut?"
-            >
-              <RadioGroup name="cedera-acl" options={["Ya", "Tidak"]} />
-            </Question>
-
-            <Question
-              number={5}
-              text="Jika ya, apakah saat ini lutut tersebut masih sering nyeri, bengkak, terasa tidak stabil, atau membatasi gerakan?"
-            >
-              <ConditionalCheckboxQuestion
-                radioName="gejala-lutut-acl"
-                checkboxName="gejala-yang-dirasakan"
-                helperText="Gejala yang dirasakan"
-                options={[
-                  "Nyeri",
-                  "Bengkak",
-                  "Tidak stabil",
-                  "Membatasi gerakan",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-
-            <Question
-              number={6}
-              text="Apakah Anda menggunakan brace/alat saat beraktivitas olahraga?"
-            >
-              <ConditionalCheckboxQuestion
-                radioName="menggunakan-brace"
-                checkboxName="jenis-brace"
-                helperText="Jenis alat yang digunakan"
-                options={[
-                  "Kacamata biasa",
-                  "Sports eyewear",
-                  "Brace lutut",
-                  "Ankle support",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-          </SectionCard>
-
-          <SectionCard
-            title="Bagian C — Kondisi Fisik Saat Ini"
-            subtitle="Kondisi fisik saat ini sebelum bertanding."
-          >
-            <Question text="Apakah saat ini Anda merasakan nyeri pada bagian tubuh tertentu saat bergerak atau berolahraga?">
-              <PainLevelQuestion />
-            </Question>
-
-            <Question text="Apakah Anda mengalami keterbatasan gerak pada bagian tubuh tertentu?">
-              <ConditionalCheckboxQuestion
-                radioName="keterbatasan-gerak"
-                checkboxName="bagian-keterbatasan-gerak"
-                helperText="Bagian tubuh yang terasa terbatas"
-                options={[
-                  "Leher",
-                  "Pergelangan kaki",
-                  "Paha",
-                  "Punggung",
-                  "Bahu",
-                  "Siku",
-                  "Pergelangan tangan",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-
-            <Question text="Apakah Anda sedang dalam masa pemulihan dari cedera, terapi, atau tindakan medis tertentu?">
-              <ConditionalCheckboxQuestion
-                radioName="masa-pemulihan"
-                checkboxName="jenis-pemulihan"
-                helperText="Pilih kondisi pemulihan"
-                options={[
-                  "Terapi cedera",
-                  "Pemulihan pasca operasi",
-                  "Konsumsi obat tertentu",
-                  "Lainnya",
-                ]}
-              />
-            </Question>
-          </SectionCard>
-
-          <SectionCard
-            title="Bagian D — Aktivitas Umum"
-            subtitle="Jawablah sesuai kondisi Anda dalam 7 hari terakhir."
-          >
-            <Question
-              number={1}
-              text="Dalam 7 hari terakhir, apakah Anda merasa kelelahan berlebihan atau kurang bugar?"
-            >
-              <RadioGroup
-                name="kelelahan-berlebihan"
-                options={["Ya", "Tidak", "Tidak yakin"]}
-              />
-            </Question>
-
-            <Question
-              number={2}
-              text="Dalam 7 hari terakhir, apakah kualitas tidur Anda kurang baik atau tidak cukup?"
-            >
-              <RadioGroup
-                name="kualitas-tidur"
-                options={["Ya", "Tidak", "Tidak yakin"]}
-              />
-            </Question>
-
-            <Question
-              number={3}
-              text="Dalam 7 hari terakhir, apakah Anda mengalami peningkatan aktivitas fisik yang cukup drastis dibanding biasanya?"
-            >
-              <RadioGroup
-                name="peningkatan-aktivitas-fisik"
-                options={["Ya", "Tidak", "Tidak yakin"]}
-              />
-            </Question>
-
-            <Question
-              number={4}
-              text="Dalam 7 hari terakhir, apakah Anda merasa tubuh belum siap untuk mengikuti pertandingan?"
-            >
-              <RadioGroup
-                name="belum-siap-bertanding"
-                options={["Ya", "Tidak", "Tidak yakin"]}
-              />
-            </Question>
-
-            <Question
-              number={5}
-              text="Menurut kondisi, seberapa besar risiko Anda mengalami masalah fisik saat mengikuti lomba ini?"
-            >
-              <div className="flex flex-wrap gap-3">
-                {["Rendah", "Sedang", "Tinggi"].map((item) => (
-                  <label
-                    key={item}
-                    className="cursor-pointer rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 has-[:checked]:border-[#B41F2A] has-[:checked]:bg-[#B41F2A] has-[:checked]:text-white"
+              {section.questions.map((q) => {
+                const currentNumber = questionCounter++;
+                const isRequired = q.required !== false;
+                
+                return (
+                  <QuestionBox
+                    key={q.code}
+                    number={currentNumber}
+                    text={q.text}
+                    required={isRequired}
                   >
-                    <input
-                      type="radio"
-                      name="tingkat-risiko"
-                      value={item}
-                      className="hidden"
-                    />
-                    {item}
-                  </label>
-                ))}
-              </div>
-            </Question>
-          </SectionCard>
+                    <div className="mt-2 pl-6">
+                      {/* Tipe Boolean */}
+                      {q.type === "boolean" && (
+                        <div className="flex flex-wrap gap-4">
+                          {[
+                            { label: "Ya", value: true },
+                            { label: "Tidak", value: false }
+                          ].map((opt) => (
+                            <label key={opt.label} className="flex cursor-pointer items-center gap-3 text-sm text-gray-800 bg-gray-50 hover:bg-red-50/50 px-5 py-3 rounded-lg border border-gray-200 transition-all has-[:checked]:border-[#B41F2A] has-[:checked]:bg-red-50 has-[:checked]:font-medium min-w-[120px]">
+                              <input
+                                type="radio"
+                                name={q.code}
+                                required={isRequired}
+                                checked={answers[q.code] === opt.value}
+                                onChange={() => handleChange(q.code, opt.value)}
+                                className="h-4 w-4 accent-[#B41F2A]"
+                              />
+                              {opt.label}
+                            </label>
+                          ))}
+                        </div>
+                      )}
 
-          <SectionCard title="Bagian E — Pernyataan & Persetujuan">
+                      {/* Tipe Single Choice */}
+                      {q.type === "single_choice" && q.options && (
+                        <div className="flex flex-col gap-2.5">
+                          {q.options.map((opt) => (
+                            <label key={opt.value} className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 p-3.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all has-[:checked]:border-[#B41F2A] has-[:checked]:bg-red-50 has-[:checked]:font-medium">
+                              <input
+                                type="radio"
+                                name={q.code}
+                                value={opt.value}
+                                required={isRequired}
+                                checked={answers[q.code] === opt.value}
+                                onChange={() => handleChange(q.code, opt.value)}
+                                className="h-4 w-4 accent-[#B41F2A]"
+                              />
+                              {opt.label}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Tipe Multi Choice */}
+                      {q.type === "multi_choice" && q.options && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {q.options.map((opt) => {
+                            const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.value);
+                            return (
+                              <label key={opt.value} className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer p-3.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all has-[:checked]:border-[#B41F2A] has-[:checked]:bg-red-50">
+                                <input
+                                  type="checkbox"
+                                  name={q.code}
+                                  value={opt.value}
+                                  checked={isChecked}
+                                  onChange={(e) => handleMultiChoiceChange(q.code, opt.value, e.target.checked)}
+                                  className="h-4 w-4 mt-0.5 accent-[#B41F2A] rounded"
+                                />
+                                <span className={isChecked ? "font-medium" : ""}>{opt.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Tipe Number */}
+                      {q.type === "number" && (
+                        <input
+                          type="number"
+                          name={q.code}
+                          min={q.min}
+                          max={q.max}
+                          required={isRequired}
+                          value={answers[q.code] || ""}
+                          onChange={(e) => handleChange(q.code, e.target.value ? Number(e.target.value) : "")}
+                          className="w-full max-w-[200px] rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#B41F2A] focus:ring-1 focus:ring-[#B41F2A]"
+                          placeholder={`Misal: ${q.min || 0}`}
+                        />
+                      )}
+
+                      {/* Tipe Open Text */}
+                      {q.type === "open_text" && (
+                        <textarea
+                          name={q.code}
+                          required={isRequired}
+                          value={answers[q.code] || ""}
+                          onChange={(e) => handleChange(q.code, e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#B41F2A] focus:ring-1 focus:ring-[#B41F2A] resize-y"
+                          placeholder="Tulis jawaban Anda di sini secara singkat..."
+                          rows={2}
+                        />
+                      )}
+
+                      {/* Tipe Scale */}
+                      {q.type === "scale" && (
+                        <div className="bg-white rounded-lg p-5 border border-gray-200 mt-2 shadow-sm">
+                          <div className="flex justify-between items-center mb-6">
+                            <span className="text-sm font-semibold text-gray-600">
+                              Nilai Pilihan Anda:
+                            </span>
+                            <div className="w-12 h-12 bg-red-50 border border-red-100 rounded-full flex items-center justify-center">
+                               <span className="text-xl text-[#B41F2A] font-extrabold">{answers[q.code] !== undefined ? answers[q.code] : "-"}</span>
+                            </div>
+                          </div>
+                          
+                          <input
+                            type="range"
+                            name={q.code}
+                            min={q.min}
+                            max={q.max}
+                            required={isRequired}
+                            value={answers[q.code] !== undefined ? answers[q.code] : (q.min || 0)}
+                            onChange={(e) => handleChange(q.code, Number(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#B41F2A]"
+                          />
+                          
+                          <div className="mt-3 flex justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            <span>{q.min} (Rendah)</span>
+                            <span>{q.max} (Tinggi)</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Notes / Tips */}
+                      {q.notes && (
+                         <div className="mt-3 bg-blue-50/50 border border-blue-100 p-3 rounded-md">
+                           <p className="text-xs text-blue-700"><span className="font-bold mr-1">ℹ</span> {q.notes}</p>
+                         </div>
+                      )}
+                    </div>
+                  </QuestionBox>
+                );
+              })}
+            </SectionCard>
+          ))}
+          
+          {/* Section Persetujuan Akhir */}
+          <SectionCard title="Bagian E — Pernyataan & Persetujuan Khusus">
             <div className="space-y-4">
-              {[
-                "Saya menyatakan bahwa seluruh data yang saya isi adalah benar, jujur, dan sesuai dengan kondisi fisik saya saat ini.",
-                "Saya memahami bahwa data ini digunakan untuk kebutuhan monitoring kesehatan dalam kegiatan Telkom University Cup.",
-                "Saya memahami bahwa data ini digunakan untuk keputusan terkait risiko dan dapat ditindaklanjuti oleh pihak terkait sesuai kegunaannya.",
-              ].map((item) => (
-                <label
-                  key={item}
-                  className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1 h-4 w-4 accent-[#B41F2A]"
-                  />
-                  <span>{item}</span>
-                </label>
-              ))}
+              <label className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-gray-700 bg-red-50/30 p-5 rounded-xl border border-red-100 hover:bg-red-50/50 transition-colors has-[:checked]:border-[#B41F2A] has-[:checked]:bg-red-50">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-1 h-5 w-5 accent-[#B41F2A] rounded shrink-0"
+                />
+                <span>Saya menyatakan dengan sebenar-benarnya bahwa seluruh data kesehatan yang saya isi adalah <strong>benar, jujur, dan merepresentasikan kondisi fisik saya saat ini</strong>. Saya sepenuhnya memahami bahwa data ini diperlukan untuk keperluan medis dan keselamatan selama kompetisi berlangsung.</span>
+              </label>
             </div>
           </SectionCard>
 
-          <div className="flex flex-col-reverse items-center justify-between gap-4 border-t border-gray-100 pt-8 sm:flex-row">
-            <p className="text-xs text-gray-500">
-              <span className="mr-1 text-green-600">●</span>
-              Data akan dikirim setelah formulir disubmit
+          {/* Action Buttons */}
+          <div className="flex flex-col-reverse items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row pb-12">
+            <p className="text-xs text-gray-500 font-medium">
+              <span className="mr-1 text-green-500 text-sm">●</span>
+              Sistem akan memvalidasi jawaban Anda secara otomatis
             </p>
-
-            <div className="flex gap-3">
+            
+            <div className="flex gap-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={handleResetForm}
-                className="rounded-md border border-gray-200 px-6 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                className="flex-1 sm:flex-none rounded-lg border border-gray-200 bg-white px-6 py-3.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors shadow-sm"
               >
-                Kosongkan Formulir
+                Reset Form
               </button>
-
               <button
                 type="submit"
-                className="rounded-md bg-[#B41F2A] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#981A24]"
+                className="flex-1 sm:flex-none rounded-lg bg-[#B41F2A] px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#981A24] hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                Kirim Formulir Sekarang →
+                Kirim Assessment →
               </button>
             </div>
           </div>
@@ -604,9 +402,12 @@ export default function SelfAssessmentPage() {
       <AnnouncementModal
         isOpen={showAnnouncementModal}
         onClose={() => setShowAnnouncementModal(false)}
-        onPrimaryClick={() => router.push("/self-assessment/hasil")}
-        primaryButtonText="Lanjut ke Hasil"
-        secondaryButtonText="Saya Mengerti"
+        onPrimaryClick={() => {
+           setShowAnnouncementModal(false);
+           router.push("/self-assessment/hasil");
+        }}
+        primaryButtonText="Lihat Hasil Evaluasi"
+        secondaryButtonText="Tutup"
       />
     </main>
   );

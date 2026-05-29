@@ -13,7 +13,8 @@ import {
   User,
   Menu,
   MoreVertical,
-  LogOut
+  LogOut,
+  ClipboardList
 } from "lucide-react";
 
 export default function PICKontingenDashboardLayout({
@@ -49,6 +50,7 @@ export default function PICKontingenDashboardLayout({
     { name: "Registrasi Tim", icon: FileText, href: "/dashboard/pic_kontingen/registrasi" },
     { name: "Jadwal & Pertandingan", icon: Trophy, href: "/dashboard/pic_kontingen/jadwal" },
     { name: "Galeri Saya", icon: Camera, href: "/dashboard/pic_kontingen/galeri" },
+    { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
     { name: "Profil Saya", icon: User, href: "/dashboard/pic_kontingen/profil" },
   ];
 
