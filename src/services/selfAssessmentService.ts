@@ -17,3 +17,14 @@ export const getQuestionnaire = async () => {
   if (!response.ok) throw new Error(resData.message || "Gagal mengambil data kuesioner");
   return resData;
 };
+
+export const submitSelfAssessment = async (data: { player_id: number | null, answers: any }) => {
+  const response = await fetch(`${API_URL}/self-assessment`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  const resData = await response.json();
+  if (!response.ok) throw new Error(resData.message || "Gagal mengirim self-assessment");
+  return resData;
+};

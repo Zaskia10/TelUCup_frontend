@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementModal from "@/components/modal/AnnouncementModal";
-import { getQuestionnaire } from "@/services/selfAssessmentService";
+import { getQuestionnaire, submitSelfAssessment } from "@/services/selfAssessmentService";
 import { Loader2 } from "lucide-react";
 
 // Types
@@ -102,6 +102,7 @@ export default function SelfAssessmentPage() {
   
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchQ = async () => {
@@ -133,11 +134,23 @@ export default function SelfAssessmentPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log("Answers Payload:", answers);
-    // TODO: Connect to submit API when available
-    setShowAnnouncementModal(true);
+    
+    try {
+      setIsSubmitting(true);
+      const payload = {
+        player_id: null,
+        answers: answers
+      };
+      await submitSelfAssessment(payload);
+      setShowAnnouncementModal(true);
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat mengirim self-assessment");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetForm = () => {
@@ -390,9 +403,10 @@ export default function SelfAssessmentPage() {
               </button>
               <button
                 type="submit"
-                className="flex-1 sm:flex-none rounded-lg bg-[#B41F2A] px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#981A24] hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none rounded-lg bg-[#B41F2A] px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#981A24] hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Kirim Assessment →
+                {isSubmitting ? "Mengirim..." : "Kirim Assessment →"}
               </button>
             </div>
           </div>

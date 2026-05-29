@@ -37,7 +37,7 @@ const mockMatchData = {
   },
   teamB: {
     id: 20,
-    name: "Fakultas Rekayasa Industri",
+    name: "Fakultas Teknik Telekomunikasi dan Elektro",
     score: 0,
     players: [
       { id: 201, name: "Fajar Rizky", nim: "1201204001", position: "Captain", medicalStatus: "Hijau" },
