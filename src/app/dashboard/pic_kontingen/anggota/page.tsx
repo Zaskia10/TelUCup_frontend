@@ -102,6 +102,20 @@ export default function AnggotaKontingenPage() {
     return matchesSearch && matchesFilter;
   });
 
+  const renderRiskBadge = (risk_lvl?: string) => {
+    switch (risk_lvl) {
+      case "low":
+        return <span className="inline-flex items-center bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">Risiko Rendah</span>;
+      case "medium":
+        return <span className="inline-flex items-center bg-orange-50 text-orange-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-orange-200">Risiko Sedang</span>;
+      case "high":
+        return <span className="inline-flex items-center bg-red-50 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-red-200">Risiko Tinggi</span>;
+      case "not_yet":
+      default:
+        return <span className="inline-flex items-center bg-gray-50 text-gray-500 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">Belum Mengisi</span>;
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -173,8 +187,10 @@ export default function AnggotaKontingenPage() {
               <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4">Profil Anggota</th>
+                  <th className="px-6 py-4">NIM / NIP</th>
+                  <th className="px-6 py-4">Status Civitas</th>
+                  <th className="px-6 py-4">Status Risiko</th>
                   <th className="px-6 py-4">Status & Kelengkapan</th>
-                  <th className="px-6 py-4">Verifikasi Panitia</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -200,9 +216,19 @@ export default function AnggotaKontingenPage() {
                           </div>
                           <div>
                             <div className="font-bold text-gray-800">{member.name}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">{member.nim_nip} • {member.employee_status || "Belum diset"}</div>
+                            {/* Hide subtitle if no email available, NIM and Status are in separate columns now */}
+                            <div className="text-xs text-gray-500 mt-0.5">{member.user?.email || member.email || ""}</div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">{member.nim_nip || "-"}</td>
+                      <td className="px-6 py-4">
+                        {member.employee_status === 'student' ? 'Mahasiswa' : 
+                         member.employee_status === 'employee' ? 'Karyawan / Dosen' : 
+                         (member.employee_status || "-")}
+                      </td>
+                      <td className="px-6 py-4">
+                        {renderRiskBadge(member.risk_lvl)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1.5">
@@ -218,19 +244,6 @@ export default function AnggotaKontingenPage() {
                           <Link href={`/player/${member.id}`} className="text-[10px] text-blue-600 hover:underline font-medium uppercase tracking-wider w-fit">
                             Lihat / Lengkapi Data
                           </Link>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-                            <StatusIcon size={12} />
-                            {statusStyle.label}
-                          </span>
-                          {member.reject_reason && (
-                            <span className="text-[10px] text-red-500 mt-1 block max-w-[200px] truncate" title={member.reject_reason}>
-                              Note: {member.reject_reason}
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">

@@ -159,6 +159,20 @@ export default function RegistrasiTimPage() {
 
   const selectedSportObj = availableSports.find(s => s.id === parseInt(selectedSport));
 
+  const renderRiskBadge = (risk_lvl?: string) => {
+    switch (risk_lvl) {
+      case "low":
+        return <span className="inline-flex items-center bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-200">Risiko Rendah</span>;
+      case "medium":
+        return <span className="inline-flex items-center bg-orange-50 text-orange-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-orange-200">Risiko Sedang</span>;
+      case "high":
+        return <span className="inline-flex items-center bg-red-50 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-red-200">Risiko Tinggi</span>;
+      case "not_yet":
+      default:
+        return <span className="inline-flex items-center bg-gray-50 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded border border-gray-200">Belum Mengisi</span>;
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -420,6 +434,9 @@ export default function RegistrasiTimPage() {
                           <div>
                             <p className="text-sm font-semibold text-gray-800">{player.name}</p>
                             <p className="text-xs text-gray-500">{player.nim_nip}</p>
+                            <div className="mt-1">
+                              {renderRiskBadge(player.risk_lvl)}
+                            </div>
                           </div>
                           {activeTeam.status === "draft" && (
                             <button 
@@ -492,6 +509,9 @@ export default function RegistrasiTimPage() {
                           <div className="truncate pr-2">
                             <p className="text-sm font-medium text-gray-800 truncate">{player.name}</p>
                             <p className="text-xs text-gray-500">{player.nim_nip}</p>
+                            <div className="mt-1">
+                              {renderRiskBadge(player.risk_lvl)}
+                            </div>
                           </div>
                           <button 
                             onClick={() => handleAddPlayer(player.id)}

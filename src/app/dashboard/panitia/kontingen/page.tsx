@@ -131,6 +131,20 @@ export default function ManajemenKontingenPage() {
     return pics.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase()));
   }, [pics, search]);
 
+  const renderRiskBadge = (risk_lvl?: string) => {
+    switch (risk_lvl) {
+      case "low":
+        return <span className="inline-flex items-center bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">Risiko Rendah</span>;
+      case "medium":
+        return <span className="inline-flex items-center bg-orange-50 text-orange-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-orange-200">Risiko Sedang</span>;
+      case "high":
+        return <span className="inline-flex items-center bg-red-50 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-red-200">Risiko Tinggi</span>;
+      case "not_yet":
+      default:
+        return <span className="inline-flex items-center bg-gray-50 text-gray-500 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">Belum Mengisi</span>;
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
@@ -324,6 +338,7 @@ export default function ManajemenKontingenPage() {
                 <tr>
                   <th className="px-6 py-4">Nama & Akun PIC</th>
                   <th className="px-6 py-4">Status Civitas</th>
+                  <th className="px-6 py-4">Status Risiko</th>
                   <th className="px-6 py-4">Kontingen yang Dikelola</th>
                 </tr>
               </thead>
@@ -356,6 +371,9 @@ export default function ManajemenKontingenPage() {
                          (pic.employee_status || "-")}
                       </td>
                       <td className="px-6 py-4">
+                        {renderRiskBadge(pic.risk_lvl)}
+                      </td>
+                      <td className="px-6 py-4">
                         {pic.managed_contingent ? (
                           <span className="font-semibold text-[#b71c1c] bg-red-50 px-3 py-1 rounded border border-red-100">
                             {pic.managed_contingent.name}
@@ -378,6 +396,7 @@ export default function ManajemenKontingenPage() {
                   <th className="px-6 py-4">Nama & Akun Player</th>
                   <th className="px-6 py-4">NIM / NIP</th>
                   <th className="px-6 py-4">Status Civitas</th>
+                  <th className="px-6 py-4">Status Risiko</th>
                   <th className="px-6 py-4">Kontingen</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
@@ -410,6 +429,9 @@ export default function ManajemenKontingenPage() {
                         {player.employee_status === 'student' ? 'Mahasiswa' : 
                          player.employee_status === 'employee' ? 'Karyawan / Dosen' : 
                          (player.employee_status || "-")}
+                      </td>
+                      <td className="px-6 py-4">
+                        {renderRiskBadge(player.risk_lvl)}
                       </td>
                       <td className="px-6 py-4">{player.contingent?.name || <span className="text-gray-400 text-xs italic">N/A</span>}</td>
                       <td className="px-6 py-4 text-right">
