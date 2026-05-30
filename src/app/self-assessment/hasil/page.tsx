@@ -1,7 +1,20 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export default function HasilAssessmentPage() {
+  const router = useRouter();
+
   return (
     <main className="min-h-screen bg-white font-sans">
       <div className="mx-auto max-w-6xl px-5 py-10">
+        <button 
+          type="button"
+          onClick={() => router.back()}
+          className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#B41F2A] transition-colors"
+        >
+          <span className="text-lg leading-none">←</span> Kembali ke Dashboard
+        </button>
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>

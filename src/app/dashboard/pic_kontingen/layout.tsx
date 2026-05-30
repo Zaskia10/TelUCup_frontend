@@ -51,7 +51,7 @@ export default function PICKontingenDashboardLayout({
     { name: "Jadwal & Pertandingan", icon: Trophy, href: "/dashboard/pic_kontingen/jadwal" },
     { name: "Galeri Saya", icon: Camera, href: "/dashboard/pic_kontingen/galeri" },
     { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
-    { name: "Profil Saya", icon: User, href: "/dashboard/pic_kontingen/profil" },
+    { name: "Profil Kontingen", icon: User, href: "/dashboard/pic_kontingen/profil-kontingen" },
   ];
 
   return (

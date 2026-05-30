@@ -276,7 +276,18 @@ export default function ManajemenKontingenPage() {
                 ) : (
                   filteredContingents.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-6 py-4 font-semibold text-gray-800">{item.name}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center text-gray-400">
+                            {item.image_url ? (
+                              <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Building2 size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                          <div className="font-semibold text-gray-800">{item.name}</div>
+                        </div>
+                      </td>
                       <td className="px-6 py-4">
                         {item.pic ? (
                           <div><div className="font-medium text-gray-700">{item.pic.name}</div><div className="text-xs text-gray-400">{item.pic.email}</div></div>
@@ -311,8 +322,8 @@ export default function ManajemenKontingenPage() {
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4">Nama PIC</th>
-                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Nama & Akun PIC</th>
+                  <th className="px-6 py-4">Status Civitas</th>
                   <th className="px-6 py-4">Kontingen yang Dikelola</th>
                 </tr>
               </thead>
@@ -324,8 +335,26 @@ export default function ManajemenKontingenPage() {
                 ) : (
                   filteredPics.map((pic) => (
                     <tr key={pic.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-800">{pic.name}</td>
-                      <td className="px-6 py-4">{pic.email}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 overflow-hidden shrink-0 flex items-center justify-center text-blue-600">
+                            {pic.photo_path ? (
+                              <img src={pic.photo_path} alt={pic.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="font-bold text-sm">{pic.name ? pic.name.charAt(0).toUpperCase() : '?'}</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800">{pic.name}</div>
+                            <div className="text-xs text-gray-400">{pic.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {pic.employee_status === 'student' ? 'Mahasiswa' : 
+                         pic.employee_status === 'employee' ? 'Karyawan / Dosen' : 
+                         (pic.employee_status || "-")}
+                      </td>
                       <td className="px-6 py-4">
                         {pic.managed_contingent ? (
                           <span className="font-semibold text-[#b71c1c] bg-red-50 px-3 py-1 rounded border border-red-100">
@@ -346,10 +375,10 @@ export default function ManajemenKontingenPage() {
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4">Nama & Akun</th>
+                  <th className="px-6 py-4">Nama & Akun Player</th>
                   <th className="px-6 py-4">NIM / NIP</th>
+                  <th className="px-6 py-4">Status Civitas</th>
                   <th className="px-6 py-4">Kontingen</th>
-                  <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -362,20 +391,27 @@ export default function ManajemenKontingenPage() {
                   filteredPlayers.map((player) => (
                     <tr key={player.id} className="hover:bg-gray-50 group">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-800">{player.name}</div>
-                        <div className="text-xs text-gray-400">{player.user?.email}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 overflow-hidden shrink-0 flex items-center justify-center text-emerald-600">
+                            {player.photo_path ? (
+                              <img src={player.photo_path} alt={player.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="font-bold text-sm">{player.name ? player.name.charAt(0).toUpperCase() : '?'}</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800">{player.name}</div>
+                            <div className="text-xs text-gray-400">{player.user?.email}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4">{player.nim_nip || "-"}</td>
-                      <td className="px-6 py-4">{player.contingent?.name || <span className="text-gray-400 text-xs italic">N/A</span>}</td>
                       <td className="px-6 py-4">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
-                            player.verification_status === 'verified' ? 'bg-green-100 text-green-700' : 
-                            player.verification_status === 'rejected' ? 'bg-red-100 text-red-700' : 
-                            'bg-orange-100 text-orange-700'
-                          }`}>
-                            {player.verification_status || 'Pending'}
-                        </span>
+                        {player.employee_status === 'student' ? 'Mahasiswa' : 
+                         player.employee_status === 'employee' ? 'Karyawan / Dosen' : 
+                         (player.employee_status || "-")}
                       </td>
+                      <td className="px-6 py-4">{player.contingent?.name || <span className="text-gray-400 text-xs italic">N/A</span>}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex flex-col sm:flex-row gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 

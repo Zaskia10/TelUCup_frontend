@@ -136,23 +136,30 @@ export default function SportsPage() {
                     </td>
                     <td className="px-6 py-4 align-top">
                       <div className="font-bold text-gray-800 text-base">{item.name}</div>
-                      {item.max_members && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Maks Total: <strong>{item.max_members}</strong> Pemain
-                        </div>
-                      )}
                     </td>
                     <td className="px-6 py-4 align-top">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2.5">
                         {item.categories && item.categories.length > 0 ? (
                           item.categories.map((cat: any) => (
-                            <span key={cat.id} className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md text-xs font-medium">
+                            <span key={cat.id} className="inline-flex items-center bg-[#b71c1c]/10 text-[#b71c1c] border border-[#b71c1c]/20 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">
                               {cat.name} 
-                              {cat.max_members && <span className="ml-1.5 pl-1.5 border-l border-blue-200 opacity-80">{cat.max_members} Pemain</span>}
+                              {cat.max_members ? (
+                                <span className="ml-1.5 pl-1.5 border-l border-[#b71c1c]/30">{cat.max_members} Pemain</span>
+                              ) : (
+                                <span className="ml-1.5 pl-1.5 border-l border-[#b71c1c]/30">Tidak dibatasi</span>
+                              )}
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-gray-400 italic">Tidak ada kategori khusus</span>
+                          item.max_members ? (
+                            <span className="inline-flex items-center bg-[#b71c1c]/10 text-[#b71c1c] border border-[#b71c1c]/20 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">
+                              Kuota Total: {item.max_members} Pemain
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">
+                              Kuota Total: Tidak dibatasi
+                            </span>
+                          )
                         )}
                       </div>
                     </td>

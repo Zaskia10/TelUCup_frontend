@@ -121,11 +121,12 @@ export default function ContingentDetailDrawer({ contingentId, isOpen, onClose }
                         </div>
                         <div className="shrink-0">
                           <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
-                            player.verification_status === 'verified' ? 'bg-green-100 text-green-700' : 
-                            player.verification_status === 'rejected' ? 'bg-red-100 text-red-700' : 
-                            'bg-orange-100 text-orange-700'
+                            player.employee_status === 'employee' ? 'bg-indigo-100 text-indigo-700' : 
+                            'bg-emerald-100 text-emerald-700'
                           }`}>
-                            {player.verification_status || 'Pending'}
+                            {player.employee_status === 'student' ? 'Mahasiswa' : 
+                             player.employee_status === 'employee' ? 'Karyawan / Dosen' : 
+                             (player.employee_status || "-")}
                           </span>
                         </div>
                       </li>

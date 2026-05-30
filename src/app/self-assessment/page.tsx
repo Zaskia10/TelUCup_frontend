@@ -196,6 +196,13 @@ export default function SelfAssessmentPage() {
   return (
     <main className="min-h-screen bg-[#f4f7f6]">
       <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8 lg:py-10">
+        <button 
+          type="button"
+          onClick={() => router.back()}
+          className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#B41F2A] transition-colors"
+        >
+          <span className="text-lg leading-none">←</span> Kembali
+        </button>
         <header className="mb-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-red-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
           <div className="relative z-10">
@@ -418,7 +425,7 @@ export default function SelfAssessmentPage() {
         onClose={() => setShowAnnouncementModal(false)}
         onPrimaryClick={() => {
            setShowAnnouncementModal(false);
-           router.push("/self-assessment/hasil");
+           router.replace("/self-assessment/hasil");
         }}
         primaryButtonText="Lihat Hasil Evaluasi"
         secondaryButtonText="Tutup"
