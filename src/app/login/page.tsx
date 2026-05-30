@@ -32,8 +32,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Save token
+        // Save token and user info
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         // Check role and redirect
         const role = data.user?.role;

@@ -5,19 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
-  Building2,
-  Users,
-  FileText,
-  Trophy,
-  Camera,
   User,
   Menu,
   MoreVertical,
   LogOut,
-  ClipboardList
 } from "lucide-react";
 
-export default function PICKontingenDashboardLayout({
+export default function PlayerDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -58,13 +52,8 @@ export default function PICKontingenDashboardLayout({
   };
 
   const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/pic_kontingen" },
-    { name: "Anggota Kontingen", icon: Users, href: "/dashboard/pic_kontingen/anggota" },
-    { name: "Registrasi Tim", icon: FileText, href: "/dashboard/pic_kontingen/registrasi" },
-    { name: "Jadwal & Pertandingan", icon: Trophy, href: "/dashboard/pic_kontingen/jadwal" },
-    { name: "Galeri Saya", icon: Camera, href: "/dashboard/pic_kontingen/galeri" },
-    { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
-    { name: "Profil Kontingen", icon: User, href: "/dashboard/pic_kontingen/profil-kontingen" },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/player" },
+    { name: "Profil Saya", icon: User, href: "/dashboard/player/profil" },
   ];
 
   return (
@@ -94,8 +83,8 @@ export default function PICKontingenDashboardLayout({
         {/* User Profile */}
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <div className="text-[13px] font-semibold tracking-wider uppercase">{user?.name || "PIC KONTINGEN"}</div>
-            <div className="text-[11px] text-red-200 capitalize">{user?.role || "PIC Kontingen"} • {user?.email || ""}</div>
+            <div className="text-[13px] font-semibold tracking-wider uppercase">{user?.name || "PLAYER"}</div>
+            <div className="text-[11px] text-red-200 capitalize">{user?.role || "Player"} • {user?.email || ""}</div>
           </div>
           <div className="w-8 h-8 rounded-[4px] bg-[#89a2cc] flex items-center justify-center overflow-hidden border border-white/20">
             <User size={20} className="text-white" />

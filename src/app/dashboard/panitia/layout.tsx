@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -23,7 +23,19 @@ export default function PanitiaDashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error("Failed to parse user data", e);
+      }
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -40,6 +52,7 @@ export default function PanitiaDashboardLayout({
       console.error("Logout error", e);
     } finally {
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
     }
   };
@@ -81,8 +94,8 @@ export default function PanitiaDashboardLayout({
         {/* User Profile */}
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <div className="text-[13px] font-semibold tracking-wider">ARIEF KURNIAWAN</div>
-            <div className="text-[11px] text-red-200">Super Admin</div>
+            <div className="text-[13px] font-semibold tracking-wider uppercase">{user?.name || "Admin"}</div>
+            <div className="text-[11px] text-red-200 capitalize">{user?.role || "Super Admin"} • {user?.email || ""}</div>
           </div>
           <div className="w-8 h-8 rounded-[4px] bg-[#89a2cc] flex items-center justify-center overflow-hidden border border-white/20">
             {/* Fallback avatar icon matching the square bluish one */}
