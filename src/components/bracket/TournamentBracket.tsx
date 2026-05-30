@@ -47,7 +47,7 @@ export default function TournamentBracket({ bracketData }: { bracketData: Bracke
                             Championship Arena
                           </div>
                           <div className="relative z-10 w-full flex justify-center">
-                            <MatchCard match={gfMatch} />
+                            <MatchCard match={gfMatch} sportName={bracketData.sport?.name} />
                           </div>
                         </div>
                       );
@@ -63,7 +63,7 @@ export default function TournamentBracket({ bracketData }: { bracketData: Bracke
                              Perebutan Juara 3
                            </div>
                            <div className="relative">
-                             <MatchCard match={tpMatch} />
+                             <MatchCard match={tpMatch} sportName={bracketData.sport?.name} />
                            </div>
                          </div>
                        );
@@ -85,7 +85,7 @@ export default function TournamentBracket({ bracketData }: { bracketData: Bracke
                       key={match.id} 
                       className={`match-wrapper relative flex-1 py-4 px-2 ${connectorClass}`}
                     >
-                      <MatchCard match={match} />
+                      <MatchCard match={match} sportName={bracketData.sport?.name} />
                     </div>
                   );
                 })}
