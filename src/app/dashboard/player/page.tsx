@@ -1,8 +1,18 @@
-export default function PlayerDashboard() {
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function PlayerDashboardIndex() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/dashboard/player/profil-saya");
+  }, [router]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
-      <h1 className="text-3xl font-bold mb-4">Player Dashboard</h1>
-      <p className="text-gray-600">Welcome, Player!</p>
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#b71c1c]" />
     </div>
   );
 }

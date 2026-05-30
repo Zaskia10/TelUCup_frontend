@@ -346,14 +346,11 @@ export default function HasilAssessmentPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          {/* ── LEFT COLUMN ── */}
           <div className="space-y-6">
-            {/* Risk summary card */}
             <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
               <div className={`h-1.5 ${risk.headerBar}`} />
               <div className="p-7">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center">
-                  {/* Confidence circle */}
                   <div
                     className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[8px] ${risk.border} bg-white`}
                   >

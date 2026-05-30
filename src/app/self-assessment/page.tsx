@@ -204,27 +204,7 @@ export default function SelfAssessmentPage() {
         >
           <span className="text-lg leading-none">←</span> Kembali
         </button>
-        <header className="mb-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-red-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
-          <div className="relative z-10">
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Self Assessment <span className="text-[#B41F2A]">Kesehatan</span>
-            </h1>
-            <p className="mt-4 text-sm leading-relaxed text-gray-600 max-w-2xl bg-gray-50 p-4 rounded-lg border border-gray-100">
-              {data.disclaimer}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                <span className="text-[#B41F2A] font-bold">◷</span>
-                Durasi: {data.estimated_duration_minutes} menit
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                <span className="text-[#B41F2A] font-bold">🔒</span>
-                Data Rahasia & Terenkripsi
-              </span>
-            </div>
-          </div>
-        </header>
+
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {data.sections.map((section) => (

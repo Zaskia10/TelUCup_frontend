@@ -41,7 +41,7 @@ export default function Navbar() {
     };
   }, [isMenuOpen]);
 
-  if (pathname?.startsWith("/dashboard")) {
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/self-assessment") || pathname?.startsWith("/match")) {
     return null;
   }
 

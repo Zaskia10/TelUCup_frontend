@@ -17,6 +17,7 @@ import {
 import { getMyContingent } from "@/services/contingentService";
 import { getTodayMatches } from "@/services/matchService";
 import { getMyRegistrations } from "@/services/registrationService";
+import MatchCard from "@/components/match/MatchCard";
 
 export default function PICKontingenDashboardOverview() {
   const [loading, setLoading] = useState(true);
@@ -68,11 +69,24 @@ export default function PICKontingenDashboardOverview() {
         const matchesData = matchesRes.data || [];
         setMatches(matchesData.map((m: any) => ({
           id: m.id,
-          teamA: m.team_a?.contingent?.name || "Tim A",
-          teamB: m.team_b?.contingent?.name || "Tim B",
-          time: m.match_time || "-",
-          venue: m.location || "-",
-          sport: "Cabang Olahraga" // Placeholder until backend provides sport_name
+          sport: "Cabang Olahraga", // Placeholder until backend provides sport_name
+          round: m.round_name || "Round",
+          status: m.status,
+          date: m.match_date,
+          time: m.match_time,
+          location: m.location,
+          teamA: {
+            name: m.team_a?.contingent?.name || "TBD",
+            score: m.score_a,
+            logoUrl: m.team_a?.contingent?.image_url,
+            cloudinaryId: m.team_a?.contingent?.cloudinary_public_id,
+          },
+          teamB: {
+            name: m.team_b?.contingent?.name || "TBD",
+            score: m.score_b,
+            logoUrl: m.team_b?.contingent?.image_url,
+            cloudinaryId: m.team_b?.contingent?.cloudinary_public_id,
+          }
         })));
 
         const registrationsData = registrationsRes.data || [];
@@ -228,45 +242,12 @@ export default function PICKontingenDashboardOverview() {
             </Link>
           </div>
           
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {matches.map((match) => (
-              <div key={match.id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative">
-                {/* Accent Line */}
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#b71c1c]"></div>
-                
-                <div className="flex items-center gap-6 w-full sm:w-auto pl-2">
-                  <div className="text-center w-24">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-2 flex items-center justify-center border border-gray-200 shadow-inner">
-                      <span className="font-bold text-gray-600">{match.teamA}</span>
-                    </div>
-                    <span className="text-sm font-semibold">{match.teamA}</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold text-[#b71c1c] bg-red-50 px-2 py-0.5 rounded-full mb-1 uppercase tracking-wider">{match.sport}</span>
-                    <span className="text-lg font-bold text-gray-800">{match.time}</span>
-                    <span className="text-xs text-gray-500 mt-1 text-center w-32 truncate" title={match.venue}>
-                      {match.venue}
-                    </span>
-                  </div>
-
-                  <div className="text-center w-24">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-2 flex items-center justify-center border border-gray-200 shadow-inner">
-                      <span className="font-bold text-gray-600">{match.teamB}</span>
-                    </div>
-                    <span className="text-sm font-semibold">{match.teamB}</span>
-                  </div>
-                </div>
-
-                <div className="flex sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                  <button className="px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium rounded-lg transition-colors flex-1 sm:flex-none text-center w-full shadow-sm">
-                    Lihat Detail
-                  </button>
-                </div>
-              </div>
+              <MatchCard key={match.id} match={match} />
             ))}
             {matches.length === 0 && (
-              <div className="text-center text-gray-500 py-10 bg-white border border-gray-200 rounded-xl shadow-sm">
+              <div className="col-span-1 md:col-span-2 text-center text-gray-500 py-10 bg-white border border-gray-200 rounded-xl shadow-sm">
                 <Swords size={48} className="mx-auto text-gray-300 mb-3" />
                 <p>Tidak ada pertandingan hari ini.</p>
               </div>

@@ -3,18 +3,19 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   Building2,
   Users,
   FileText,
   Trophy,
   Camera,
   User,
+  UserCircle,
   Menu,
   MoreVertical,
   LogOut,
-  ClipboardList
+  ClipboardList,
 } from "lucide-react";
 
 export default function PICKontingenDashboardLayout({
@@ -64,7 +65,8 @@ export default function PICKontingenDashboardLayout({
     { name: "Jadwal & Pertandingan", icon: Trophy, href: "/dashboard/pic_kontingen/jadwal" },
     { name: "Galeri Saya", icon: Camera, href: "/dashboard/pic_kontingen/galeri" },
     { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
-    { name: "Profil Kontingen", icon: User, href: "/dashboard/pic_kontingen/profil-kontingen" },
+    { name: "Profil Saya", icon: UserCircle, href: "/dashboard/pic_kontingen/profil-saya" },
+    { name: "Profil Kontingen", icon: Building2, href: "/dashboard/pic_kontingen/profil-kontingen" },
   ];
 
   return (

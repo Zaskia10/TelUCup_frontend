@@ -61,3 +61,15 @@ export const getMatchDetail = async (matchId: number) => {
   return handleResponse(res);
 };
 
+export const getMyMatches = async (params?: Record<string, string | number>) => {
+  let url = `${API_URL}/my-matches`;
+  if (params) {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => qs.append(key, String(val)));
+    url += `?${qs.toString()}`;
+  }
+  const res = await fetch(url, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};

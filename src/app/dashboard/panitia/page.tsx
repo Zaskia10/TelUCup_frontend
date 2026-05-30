@@ -53,31 +53,35 @@ export default function AdminDashboardOverview() {
           console.error("Failed to fetch risk summary", e);
         }
 
-        // 2. Fetch Registrations
+        // 2. Fetch Contingents & Registrations
         let contingentsList: any[] = [];
         let waitingVerification = 0;
+        
         try {
+          // Fetch all contingents for accurate total
+          const contRes = await fetch(`${apiUrl}/contingents`, { headers });
+          if (contRes.ok) {
+            const contDataJson = await contRes.json();
+            const contingentsData = contDataJson.data || [];
+            
+            contingentsList = contingentsData.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              pic: c.pic?.name || "Tidak ada PIC",
+              players: c.players_count || 0
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to fetch contingents", e);
+        }
+
+        try {
+          // Fetch registrations just for waitingVerification count
           const regRes = await fetch(`${apiUrl}/registrations`, { headers });
           if (regRes.ok) {
             const regDataJson = await regRes.json();
             const regs = regDataJson.data?.data || [];
-            
-            // Count waiting verification (assuming 'draft' or 'pending' status)
             waitingVerification = regs.filter((r: any) => r.status === "draft").length; 
-            
-            // Extract unique contingents
-            const uniqueContingentsMap = new Map();
-            regs.forEach((r: any) => {
-              if (r.contingent && !uniqueContingentsMap.has(r.contingent.id)) {
-                uniqueContingentsMap.set(r.contingent.id, {
-                  id: r.contingent.id,
-                  name: r.contingent.name,
-                  pic: r.contingent.pic?.name || "Tidak ada PIC",
-                  players: r.contingent.players_count || 0
-                });
-              }
-            });
-            contingentsList = Array.from(uniqueContingentsMap.values());
           }
         } catch (e) {
           console.error("Failed to fetch registrations", e);

@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  UserCircle,
+  Camera,
+  ClipboardList,
   User,
   Menu,
   MoreVertical,
   LogOut,
-  ClipboardList,
 } from "lucide-react";
 
 export default function PlayerDashboardLayout({
@@ -39,9 +40,9 @@ export default function PlayerDashboardLayout({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
-        }
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
     } catch (e) {
       console.error("Logout error", e);
@@ -53,40 +54,56 @@ export default function PlayerDashboardLayout({
   };
 
   const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/player" },
-    { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
-    { name: "Profil Saya", icon: User, href: "/dashboard/player/profil" },
+    {
+      name: "Profil Saya",
+      icon: UserCircle,
+      href: "/dashboard/player/profil-saya",
+    },
+    {
+      name: "Self Assessment",
+      icon: ClipboardList,
+      href: "/self-assessment",
+    },
+    {
+      name: "Galeri Saya",
+      icon: Camera,
+      href: "/dashboard/player/galeri",
+    },
   ];
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <div className="flex flex-col h-screen overflow-hidden font-sans bg-[#f4f7f6]">
-      {/* Top Navbar (Full Width) */}
+      {/* Top Navbar */}
       <header className="h-[60px] bg-[#a81d22] text-white flex items-center justify-between px-4 lg:px-6 shadow-md shrink-0 z-50 relative">
         <div className="flex items-center gap-3">
-          {/* Mobile menu button */}
-          <button 
+          <button
             className="lg:hidden p-1 rounded hover:bg-white/10 transition-colors"
             onClick={() => setIsSidebarOpen(true)}
           >
             <Menu size={24} />
           </button>
-          
-          {/* 3 dots & Brand */}
+
           <div className="hidden lg:flex items-center gap-4">
             <button className="p-1 hover:bg-white/10 rounded transition-colors text-white/90">
               <MoreVertical size={20} />
             </button>
             <span className="font-bold text-[16px] tracking-wide">TEL-U CUP</span>
           </div>
-          {/* Mobile Brand */}
           <span className="font-bold text-[16px] tracking-wide lg:hidden">TEL-U CUP</span>
         </div>
 
-        {/* User Profile */}
+        {/* User info */}
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <div className="text-[13px] font-semibold tracking-wider uppercase">{user?.name || "PLAYER"}</div>
-            <div className="text-[11px] text-red-200 capitalize">{user?.role || "Player"} • {user?.email || ""}</div>
+            <div className="text-[13px] font-semibold tracking-wider uppercase">
+              {user?.name || "PLAYER"}
+            </div>
+            <div className="text-[11px] text-red-200 capitalize">
+              {user?.role || "Player"} • {user?.email || ""}
+            </div>
           </div>
           <div className="w-8 h-8 rounded-[4px] bg-[#89a2cc] flex items-center justify-center overflow-hidden border border-white/20">
             <User size={20} className="text-white" />
@@ -94,36 +111,41 @@ export default function PlayerDashboardLayout({
         </div>
       </header>
 
-      {/* Bottom Section: Sidebar + Main Content */}
+      {/* Body: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Sidebar Overlay (Mobile) */}
+        {/* Mobile overlay */}
         {isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
-        <aside 
-          className={`absolute lg:static inset-y-0 left-0 z-40 w-[260px] bg-white shadow-[2px_0_15px_rgba(0,0,0,0.03)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        <aside
+          className={`absolute lg:static inset-y-0 left-0 z-40 w-[260px] bg-white shadow-[2px_0_15px_rgba(0,0,0,0.03)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
-          {/* Menu Items */}
           <div className="flex-1 overflow-y-auto py-5">
             <ul className="space-y-1 px-3">
               {menuItems.map((item) => {
-                const isActive = pathname === item.href;
+                const active = isActive(item.href);
                 return (
                   <li key={item.name}>
-                    <Link 
+                    <Link
                       href={item.href}
+                      onClick={() => setIsSidebarOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-red-50 text-[#b71c1c] font-medium" 
+                        active
+                          ? "bg-red-50 text-[#b71c1c] font-medium"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                     >
-                      <item.icon size={20} className={isActive ? "text-[#b71c1c]" : "text-gray-500"} />
+                      <item.icon
+                        size={20}
+                        className={active ? "text-[#b71c1c]" : "text-gray-500"}
+                      />
                       <span className="text-[14px] leading-tight">{item.name}</span>
                     </Link>
                   </li>
@@ -132,9 +154,9 @@ export default function PlayerDashboardLayout({
             </ul>
           </div>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg transition-colors text-red-600 hover:bg-red-50 font-medium"
             >
@@ -144,7 +166,7 @@ export default function PlayerDashboardLayout({
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 lg:p-8">
           {children}
         </main>
