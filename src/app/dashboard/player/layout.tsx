@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   User,
   Menu,
   MoreVertical,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 
 export default function PlayerDashboardLayout({
@@ -53,6 +54,7 @@ export default function PlayerDashboardLayout({
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/player" },
+    { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
     { name: "Profil Saya", icon: User, href: "/dashboard/player/profil" },
   ];
 

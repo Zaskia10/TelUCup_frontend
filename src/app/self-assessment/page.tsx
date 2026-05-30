@@ -103,6 +103,8 @@ export default function SelfAssessmentPage() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [assessmentId, setAssessmentId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchQ = async () => {
@@ -136,18 +138,17 @@ export default function SelfAssessmentPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("Answers Payload:", answers);
-    
+    setSubmitError("");
+
     try {
       setIsSubmitting(true);
-      const payload = {
-        player_id: null,
-        answers: answers
-      };
-      await submitSelfAssessment(payload);
+      const payload = { player_id: null, answers };
+      const result = await submitSelfAssessment(payload);
+      setAssessmentId(result.data?.id ?? null);
       setShowAnnouncementModal(true);
     } catch (err: any) {
-      alert(err.message || "Terjadi kesalahan saat mengirim self-assessment");
+      setSubmitError(err.message || "Terjadi kesalahan saat mengirim self-assessment");
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } finally {
       setIsSubmitting(false);
     }
@@ -393,13 +394,24 @@ export default function SelfAssessmentPage() {
             </div>
           </SectionCard>
 
+          {/* Submit Error */}
+          {submitError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 flex items-start gap-3">
+              <span className="shrink-0 text-lg text-[#B41F2A] font-bold mt-0.5">!</span>
+              <div>
+                <p className="text-sm font-bold text-[#B41F2A]">Gagal Mengirim</p>
+                <p className="text-xs text-red-700 mt-0.5">{submitError}</p>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex flex-col-reverse items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row pb-12">
             <p className="text-xs text-gray-500 font-medium">
               <span className="mr-1 text-green-500 text-sm">●</span>
               Sistem akan memvalidasi jawaban Anda secara otomatis
             </p>
-            
+
             <div className="flex gap-3 w-full sm:w-auto">
               <button
                 type="button"
@@ -413,7 +425,11 @@ export default function SelfAssessmentPage() {
                 disabled={isSubmitting}
                 className="flex-1 sm:flex-none rounded-lg bg-[#B41F2A] px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#981A24] hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isSubmitting ? "Mengirim..." : "Kirim Assessment →"}
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={15} className="animate-spin" /> Mengirim...
+                  </span>
+                ) : "Kirim Assessment →"}
               </button>
             </div>
           </div>
@@ -424,10 +440,13 @@ export default function SelfAssessmentPage() {
         isOpen={showAnnouncementModal}
         onClose={() => setShowAnnouncementModal(false)}
         onPrimaryClick={() => {
-           setShowAnnouncementModal(false);
-           router.replace("/self-assessment/hasil");
+          setShowAnnouncementModal(false);
+          router.replace(assessmentId ? `/self-assessment/hasil?id=${assessmentId}` : "/self-assessment/hasil");
         }}
-        primaryButtonText="Lihat Hasil Evaluasi"
+        title="Assessment Berhasil Disimpan!"
+        category="Self Assessment Selesai"
+        description="Hasil analisis risiko kesehatan Anda telah diproses. Klik tombol di bawah untuk melihat hasil evaluasi lengkap."
+        primaryButtonText="Lihat Hasil Assessment →"
         secondaryButtonText="Tutup"
       />
     </main>
