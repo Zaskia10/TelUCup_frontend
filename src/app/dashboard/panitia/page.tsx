@@ -8,12 +8,10 @@ import {
   Swords, 
   AlertTriangle,
   ChevronDown,
-  ChevronUp,
-  UserCheck,
   UserPlus,
-  ArrowUpRight,
-  Briefcase
+  ArrowUpRight
 } from "lucide-react";
+import MatchCard from "@/components/match/MatchCard";
 
 export default function AdminDashboardOverview() {
   const [stats, setStats] = useState({
@@ -25,7 +23,6 @@ export default function AdminDashboardOverview() {
   
   const [matches, setMatches] = useState<any[]>([]);
   const [contingents, setContingents] = useState<any[]>([]);
-  const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +55,6 @@ export default function AdminDashboardOverview() {
         let waitingVerification = 0;
         
         try {
-          // Fetch all contingents for accurate total
           const contRes = await fetch(`${apiUrl}/contingents`, { headers });
           if (contRes.ok) {
             const contDataJson = await contRes.json();
@@ -76,7 +72,6 @@ export default function AdminDashboardOverview() {
         }
 
         try {
-          // Fetch registrations just for waitingVerification count
           const regRes = await fetch(`${apiUrl}/registrations`, { headers });
           if (regRes.ok) {
             const regDataJson = await regRes.json();
@@ -87,43 +82,40 @@ export default function AdminDashboardOverview() {
           console.error("Failed to fetch registrations", e);
         }
 
-        // 3. Fetch Schedules
+        // 3. Fetch Schedules using MatchCard schema
         let mappedMatches: any[] = [];
         try {
           const today = new Date().toISOString().split('T')[0];
-          const scheduleRes = await fetch(`${apiUrl}/admin/schedules?date=${today}`, { headers });
+          const scheduleRes = await fetch(`${apiUrl}/matches?date=${today}`, { headers });
           if (scheduleRes.ok) {
-            const schedules = await scheduleRes.json();
+            const resJson = await scheduleRes.json();
+            const schedules = resJson.data || [];
             mappedMatches = schedules.map((sch: any) => {
-              const teamAName = sch.team_a?.contingent?.name || "TBD";
-              const teamBName = sch.team_b?.contingent?.name || "TBD";
-              
-              const mapPlayers = (teamData: any, teamName: string) => {
-                return (teamData?.players || []).map((p: any) => ({
-                  id: p.id,
-                  name: p.name,
-                  team: teamName,
-                  checkedIn: !!p.checked_in_at,
-                  employeeStatus: p.employee_status || "Unknown"
-                }));
-              };
-
               return {
                 id: sch.id,
-                teamA: teamAName,
-                teamB: teamBName,
-                time: sch.match_time,
-                venue: sch.location,
+                sport: sch.sport?.name || "Cabang Olahraga",
+                round: sch.round_name || "Round",
                 status: sch.status,
-                players: [
-                  ...mapPlayers(sch.team_a, teamAName), 
-                  ...mapPlayers(sch.team_b, teamBName)
-                ]
+                date: sch.match_date,
+                time: sch.match_time,
+                location: sch.location,
+                teamA: {
+                  name: sch.team_a?.contingent_name || "TBD",
+                  score: sch.score_a,
+                  logoUrl: sch.team_a?.image_url,
+                  cloudinaryId: sch.team_a?.cloudinary_public_id,
+                },
+                teamB: {
+                  name: sch.team_b?.contingent_name || "TBD",
+                  score: sch.score_b,
+                  logoUrl: sch.team_b?.image_url,
+                  cloudinaryId: sch.team_b?.cloudinary_public_id,
+                }
               };
             });
           }
         } catch (e) {
-          console.error("Failed to fetch schedules", e);
+          console.error("Failed to fetch matches", e);
         }
 
         setStats({
@@ -144,10 +136,6 @@ export default function AdminDashboardOverview() {
 
     fetchDashboardData();
   }, []);
-
-  const toggleMatchExpand = (id: number) => {
-    setExpandedMatchId(expandedMatchId === id ? null : id);
-  };
 
   const quickStatsData = [
     { 
@@ -220,14 +208,14 @@ export default function AdminDashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* B. Widget 1: Live Bracket & Field Verification Preview */}
+        {/* B. Widget 1: Live Matches */}
         <div className="xl:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Swords size={20} className="text-[#b71c1c]" />
-              Live Matches & Verifikasi Lapangan
+              Pertandingan Hari ini
             </h2>
-            <button className="text-sm text-[#b71c1c] font-medium hover:underline">Lihat Semua Jadwal</button>
+            <Link href="/dashboard/panitia/matches" className="text-sm text-[#b71c1c] font-medium hover:underline">Lihat Semua Jadwal</Link>
           </div>
           
           <div className="space-y-4">
@@ -236,163 +224,76 @@ export default function AdminDashboardOverview() {
                 Tidak ada pertandingan yang dijadwalkan hari ini.
               </div>
             ) : (
-              matches.map((match) => (
-                <div key={match.id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                  {/* Match Card Header */}
-                  <div className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-6 w-full sm:w-auto">
-                      <div className="text-center w-24">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-2 flex items-center justify-center border border-gray-200 shadow-inner p-2">
-                          <span className="font-bold text-gray-600 text-xs truncate max-w-full">{match.teamA}</span>
-                        </div>
-                        <span className="text-sm font-semibold truncate w-24 block" title={match.teamA}>{match.teamA}</span>
-                      </div>
-                      
-                      <div className="flex flex-col items-center">
-                        <span className="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full mb-2">
-                          {match.time || "TBD"}
-                        </span>
-                        <span className="text-lg font-bold text-gray-300">VS</span>
-                        <span className="text-xs text-gray-500 mt-1 text-center w-24 truncate" title={match.venue}>
-                          {match.venue || "Lokasi belum ditentukan"}
-                        </span>
-                      </div>
-
-                      <div className="text-center w-24">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-2 flex items-center justify-center border border-gray-200 shadow-inner p-2">
-                          <span className="font-bold text-gray-600 text-xs truncate max-w-full">{match.teamB}</span>
-                        </div>
-                        <span className="text-sm font-semibold truncate w-24 block" title={match.teamB}>{match.teamB}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                      <button className="px-4 py-2 border border-[#b71c1c] text-[#b71c1c] hover:bg-red-50 text-sm font-medium rounded-lg transition-colors flex-1 sm:flex-none text-center">
-                        Update Skor
-                      </button>
-                      <button 
-                        onClick={() => toggleMatchExpand(match.id)}
-                        className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-none"
-                      >
-                        Verifikasi Check-in
-                        {expandedMatchId === match.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Expendable Drawer: Verifikasi Lapangan */}
-                  {expandedMatchId === match.id && (
-                    <div className="bg-slate-50 border-t border-gray-200 p-5">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                        <UserCheck size={16} className="text-gray-500" />
-                        Daftar Pemain & Status
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Group by Team for better layout */}
-                        {[match.teamA, match.teamB].map((team, idx) => (
-                          <div key={idx} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b pb-2">
-                              Tim {team}
-                            </div>
-                            <ul className="space-y-3">
-                              {match.players.filter((p: any) => p.team === team).map((player: any) => (
-                                <li key={player.id} className="flex items-center justify-between">
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-gray-800">{player.name}</span>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold flex items-center gap-1">
-                                        <Briefcase size={10} />
-                                        {player.employeeStatus}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center">
-                                    {player.checkedIn ? (
-                                      <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
-                                        Checked In
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-200">
-                                        Menunggu
-                                      </span>
-                                    )}
-                                  </div>
-                                </li>
-                              ))}
-                              {match.players.filter((p: any) => p.team === team).length === 0 && (
-                                <li className="text-xs text-gray-400 italic">Tidak ada pemain yang terdaftar.</li>
-                              )}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {matches.map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        {/* C. Widget 2: Ringkasan Kontingen & Manajemen Akun */}
-        <div className="xl:col-span-1 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <Building2 size={20} className="text-[#b71c1c]" />
-              Manajemen Kontingen
-            </h2>
+        {/* C. Widget 2: Risk Warnings & Top Contingents */}
+        <div className="xl:col-span-1 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-red-50/30">
+              <h2 className="text-[15px] font-bold text-gray-800 flex items-center gap-2">
+                <AlertTriangle size={18} className="text-red-500" />
+                Peringatan Medis
+              </h2>
+            </div>
+            
+            <div className="p-5 flex-1 flex flex-col justify-center items-center text-center">
+               <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-3">
+                 <AlertTriangle size={28} className="text-red-500" />
+               </div>
+               <h3 className="text-2xl font-black text-gray-800 mb-1">{stats.redFlags} Pemain</h3>
+               <p className="text-sm text-gray-500 max-w-[200px] mb-4">
+                 Terdeteksi memiliki riwayat medis berisiko tinggi (High Risk).
+               </p>
+               <Link href="/dashboard/panitia/medis" className="text-sm font-bold text-[#b71c1c] hover:underline flex items-center gap-1">
+                 Tinjau Data Medis <ArrowUpRight size={16} />
+               </Link>
+            </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="overflow-x-auto flex-1 max-h-[500px] overflow-y-auto">
-              {contingents.length === 0 ? (
-                <div className="p-6 text-center text-sm text-gray-500">
-                  Belum ada data kontingen.
-                </div>
-              ) : (
-                <table className="w-full text-left text-sm text-gray-600">
-                  <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3">Kontingen & PIC</th>
-                      <th className="px-4 py-3 text-center">Pemain</th>
-                      <th className="px-4 py-3 text-right">Aksi Cepat</th>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-[15px] font-bold text-gray-800 flex items-center gap-2">
+                <Building2 size={18} className="text-[#b71c1c]" />
+                Kontingen Terdaftar
+              </h2>
+            </div>
+            
+            <div className="overflow-x-auto flex-1">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3">Nama Kontingen</th>
+                    <th className="px-4 py-3 text-right">Pemain</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {contingents.slice(0, 5).map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50/50">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-800 text-[13px]">{item.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">PIC: {item.pic}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center justify-center text-[11px] font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                          {item.players}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {contingents.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3">
-                          <div className="font-semibold text-gray-800 text-[13px]">{item.name}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">PIC: {item.pic}</div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">
-                            {item.players}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex flex-col items-end gap-2">
-                            <Link 
-                              href="/dashboard/panitia/kontingen"
-                              className="text-[11px] flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-colors w-full sm:w-auto justify-center sm:justify-end"
-                            >
-                              <ArrowUpRight size={12} />
-                              Kelola Kontingen
-                            </Link>
-                            <Link 
-                              href="/dashboard/panitia/kontingen"
-                              className="text-[11px] flex items-center gap-1 font-medium text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition-colors w-full sm:w-auto justify-center sm:justify-end"
-                            >
-                              <UserPlus size={12} />
-                              Tambah Anggota
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                  ))}
+                  {contingents.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="px-4 py-8 text-center text-gray-400">Belum ada kontingen terdaftar</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
             <div className="p-3 border-t border-gray-100 bg-gray-50 text-center shrink-0">
               <Link href="/dashboard/panitia/kontingen" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
