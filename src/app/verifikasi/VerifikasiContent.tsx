@@ -23,6 +23,7 @@ import {
   checkinPlayer,
   undoCheckinPlayer,
 } from "@/services/matchService";
+import { setMatchStatus } from "@/services/bracketService";
 
 // ─────────────────────────────────────────────────────────────
 //  Types
@@ -119,6 +120,7 @@ export default function VerifikasiContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"a" | "b">("a");
   const [loadingPlayers, setLoadingPlayers] = useState<Set<number>>(new Set());
+  const [isStarting, setIsStarting] = useState(false);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [showAllLogs, setShowAllLogs] = useState(false);
 
@@ -183,7 +185,27 @@ export default function VerifikasiContent() {
   const handleCheckin = async (player: Player) => {
     if (!matchId || loadingPlayers.has(player.id)) return;
     setLoadingPlayers((s) => new Set(s).add(player.id));
+    
+    // 1. Optimistic Update (update UI instantly)
+    const isNowCheckedIn = !player.checked_in;
+    setMatchData((prev) => {
+      if (!prev) return prev;
+      const updateTeam = (team?: typeof prev.team_a) => {
+        if (!team) return team;
+        return {
+          ...team,
+          players: team.players.map(p => 
+            p.id === player.id 
+              ? { ...p, checked_in: isNowCheckedIn, checked_in_at: new Date().toISOString() } 
+              : p
+          )
+        };
+      };
+      return { ...prev, team_a: updateTeam(prev.team_a), team_b: updateTeam(prev.team_b) };
+    });
+
     try {
+      // 2. Call API
       if (player.checked_in) {
         await undoCheckinPlayer(matchId, player.id);
         addLog(`Check-in dibatalkan: ${player.name}`);
@@ -191,9 +213,25 @@ export default function VerifikasiContent() {
         await checkinPlayer(matchId, player.id);
         addLog(`Check-in lapangan: ${player.name}`);
       }
-      await fetchData(true);
+      // Note: We deliberately skip fetchData(true) here to keep it blazing fast.
     } catch (e: unknown) {
       addLog(`Gagal: ${(e as Error).message}`, true);
+      // 3. Rollback Optimistic Update if API failed
+      setMatchData((prev) => {
+        if (!prev) return prev;
+        const updateTeam = (team?: typeof prev.team_a) => {
+          if (!team) return team;
+          return {
+            ...team,
+            players: team.players.map(p => 
+              p.id === player.id 
+                ? { ...p, checked_in: player.checked_in, checked_in_at: player.checked_in_at } 
+                : p
+            )
+          };
+        };
+        return { ...prev, team_a: updateTeam(prev.team_a), team_b: updateTeam(prev.team_b) };
+      });
     } finally {
       setLoadingPlayers((s) => {
         const next = new Set(s);
@@ -207,15 +245,59 @@ export default function VerifikasiContent() {
     if (!matchId) return;
     const notIn = team.players.filter((p) => !p.checked_in);
     if (!notIn.length) return;
+    
     setLoadingPlayers(new Set(notIn.map((p) => p.id)));
     addLog(`Memproses check-in semua pemain ${team.contingent.name}...`);
+    
+    // 1. Optimistic Update
+    setMatchData((prev) => {
+      if (!prev) return prev;
+      const isTeamA = prev.team_a?.registration_id === team.registration_id;
+      const updateTeam = (t?: typeof prev.team_a) => {
+        if (!t) return t;
+        return {
+          ...t,
+          players: t.players.map(p => ({ ...p, checked_in: true, checked_in_at: p.checked_in_at || new Date().toISOString() }))
+        };
+      };
+      return {
+        ...prev,
+        team_a: isTeamA ? updateTeam(prev.team_a) : prev.team_a,
+        team_b: !isTeamA ? updateTeam(prev.team_b) : prev.team_b
+      };
+    });
+
+    // 2. Call APIs
     const results = await Promise.allSettled(
       notIn.map((p) => checkinPlayer(matchId, p.id))
     );
-    const success = results.filter((r) => r.status === "fulfilled").length;
-    addLog(`${success}/${notIn.length} pemain berhasil check-in (${team.contingent.name})`);
+    
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
+    addLog(`${successCount}/${notIn.length} pemain berhasil check-in (${team.contingent.name})`);
+    
     setLoadingPlayers(new Set());
-    await fetchData(true);
+    
+    // 3. If any failed, refresh to sync real state
+    if (successCount !== notIn.length) {
+      await fetchData(true);
+    }
+  };
+
+  const handleStartMatch = async () => {
+    if (!matchId || !allCheckedIn || isStarting) return;
+    setIsStarting(true);
+    addLog(`Memulai pertandingan...`, true);
+    try {
+      await setMatchStatus(matchId, { status: "live" });
+      addLog(`Pertandingan dimulai!`);
+      // Update local state instantly
+      setMatchData((prev) => prev ? { ...prev, status: "live" } : prev);
+      router.back();
+    } catch (e: unknown) {
+      addLog(`Gagal memulai: ${(e as Error).message}`, true);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   // ── Derived ──
@@ -607,27 +689,27 @@ export default function VerifikasiContent() {
             </div>
 
             {/* ── Footer Action Bar ── */}
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white px-5 py-3 shadow-sm">
-              <p className="text-xs text-gray-400 font-medium">
-                {checkedInCount} / {totalPlayers} pemain sudah check-in
-              </p>
-              <div className="flex items-center gap-3">
-                <button disabled
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-bold text-gray-400 cursor-not-allowed">
-                  <Flag className="h-4 w-4" />
-                  Mulai Match
-                </button>
-                <button disabled={!allCheckedIn}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition ${
-                    allCheckedIn
-                      ? "bg-[#b6252a] text-white hover:bg-[#9a1e22] shadow-sm"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}>
-                  <Shield className="h-4 w-4" />
-                  Input Skor
-                </button>
+            {matchData?.status === "scheduled" && (
+              <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white px-5 py-3 shadow-sm">
+                <p className="text-xs text-gray-400 font-medium">
+                  {checkedInCount} / {totalPlayers} pemain sudah check-in
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleStartMatch}
+                    disabled={!allCheckedIn || isStarting}
+                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition ${
+                      allCheckedIn
+                        ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
+                        : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed border"
+                    }`}
+                  >
+                    {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
+                    {isStarting ? "Memulai..." : "Mulai Pertandingan"}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* ════════════════════════════════

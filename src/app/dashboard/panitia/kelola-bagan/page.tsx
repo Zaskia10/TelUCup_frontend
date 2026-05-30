@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AdminBracketFilter from "@/components/bracket/AdminBracketFilter";
 import AdminMatchCard from "@/components/bracket/AdminMatchCard";
 import MatchEditModal from "@/components/bracket/MatchEditPanel";
@@ -28,6 +29,10 @@ import type {
 import "@/components/bracket/bracket.css";
 
 export default function KelolaBaganPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialized = useRef(false);
+
   // ── Selection state ──
   const [sports, setSports] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
@@ -64,7 +69,31 @@ export default function KelolaBaganPage() {
   const fetchSports = async () => {
     try {
       const res = await getSports();
-      setSports(res.data);
+      const loadedSports = res.data;
+      setSports(loadedSports);
+      
+      // Auto-select from URL if present
+      if (!initialized.current) {
+        initialized.current = true;
+        const sportId = searchParams?.get("sport");
+        const catId = searchParams?.get("category");
+        
+        if (sportId) {
+          const s = loadedSports.find((sp: Sport) => sp.id === Number(sportId));
+          if (s) {
+            setSelectedSport(s);
+            if (catId) {
+              const c = s.categories.find((cat: SportCategory) => cat.id === Number(catId));
+              if (c) {
+                setSelectedCategory(c);
+                fetchRegistrations(s.id, c.id);
+              }
+            } else if (s.categories.length === 0) {
+              fetchRegistrations(s.id, null);
+            }
+          }
+        }
+      }
     } catch (error) {
       showToast("Gagal memuat cabang olahraga", "error");
     }
@@ -104,11 +133,22 @@ export default function KelolaBaganPage() {
 
   // ── Handlers ──
 
+  const updateUrlParams = (sportId?: number, categoryId?: number) => {
+    const params = new URLSearchParams();
+    if (sportId) params.set("sport", sportId.toString());
+    if (categoryId) params.set("category", categoryId.toString());
+    
+    // Replace URL without full reload (shallow)
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
   const handleSportChange = (sport: Sport) => {
     setSelectedSport(sport);
     setSelectedCategory(null);
     setBracketData(null);
     setEditingMatch(null);
+    
+    updateUrlParams(sport.id);
 
     if (sport.categories.length === 0) {
       fetchRegistrations(sport.id, null);
@@ -123,18 +163,33 @@ export default function KelolaBaganPage() {
     setEditingMatch(null);
 
     if (selectedSport && category) {
+      updateUrlParams(selectedSport.id, category.id);
       fetchRegistrations(selectedSport.id, category.id);
     } else if (selectedSport && selectedSport.categories.length === 0) {
+      updateUrlParams(selectedSport.id);
       fetchRegistrations(selectedSport.id, null);
     } else {
+      if (selectedSport) updateUrlParams(selectedSport.id);
       setRegistrations([]);
     }
   };
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
     if (selectedSport && (!selectedSport.categories.length || selectedCategory)) {
       loadBracket();
+      
+      // Auto-refresh bracket every 5 seconds to ensure data stays in sync
+      // especially when returning from verification page via back navigation
+      interval = setInterval(() => {
+        loadBracket();
+      }, 5000);
     }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [selectedSport, selectedCategory]);
 
   const handleGenerate = async () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { BracketMatch } from "@/types/bracket";
 
 interface AdminMatchCardProps {
@@ -28,6 +29,16 @@ export default function AdminMatchCard({
   const isScheduled = match.status === "scheduled";
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
+
+  // Check-in gate: all players from both teams must be checked in before starting
+  const playersA = match.team_a?.players ?? [];
+  const playersB = match.team_b?.players ?? [];
+  const hasPlayerData = playersA.length > 0 || playersB.length > 0;
+  const allCheckedIn =
+    !hasPlayerData || // if no player data from API, don't block
+    (playersA.every((p) => p.checked_in) && playersB.every((p) => p.checked_in));
+  const totalPlayers = playersA.length + playersB.length;
+  const checkedInCount = [...playersA, ...playersB].filter((p) => p.checked_in).length;
 
   const statusConfig = {
     live: {
@@ -120,7 +131,7 @@ export default function AdminMatchCard({
         <DraggableTeamRow
           matchId={match.id}
           slot="a"
-          name={match.team_a?.contingent.abbreviation ?? "TBD"}
+          name={match.team_a?.contingent.abbreviation || match.team_a?.contingent.name || "TBD"}
           fullName={match.team_a?.contingent.name}
           score={isFinished ? match.score_a : null}
           isWinner={
@@ -137,7 +148,7 @@ export default function AdminMatchCard({
         <DraggableTeamRow
           matchId={match.id}
           slot="b"
-          name={match.team_b?.contingent.abbreviation ?? "TBD"}
+          name={match.team_b?.contingent.abbreviation || match.team_b?.contingent.name || "TBD"}
           fullName={match.team_b?.contingent.name}
           score={isFinished ? match.score_b : null}
           isWinner={
@@ -206,21 +217,38 @@ export default function AdminMatchCard({
           )}
         </div>
 
-        {/* Mulai Pertandingan button — only for scheduled, non-bye */}
-        {isScheduled && !isBye && onStart && match.team_a && match.team_b && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStart(match.id);
-            }}
-            className="w-full flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg transition-all duration-150 shadow-sm"
-          >
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            Mulai Pertandingan
-          </button>
+        {/* Scheduled Matches Action Buttons (Non-Bye, Both Teams Present) */}
+        {isScheduled && !isBye && match.team_a && match.team_b && (
+          <div className="flex flex-col gap-1.5 mt-1">
+            {allCheckedIn ? (
+              onStart && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStart(match.id);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg transition-all duration-150 shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Mulai Pertandingan
+                </button>
+              )
+            ) : (
+              <Link
+                href={`/verifikasi?match_id=${match.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full flex items-center justify-center gap-1.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg transition-all duration-150 shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Check-in Pemain ({checkedInCount}/{totalPlayers})
+              </Link>
+            )}
+          </div>
         )}
 
         {/* Selesaikan Pertandingan button — only for live, non-bye */}
@@ -391,7 +419,7 @@ function DraggableTeamRow({
           >
             {isBye ? "BYE" : name}
           </span>
-          {fullName && !isBye && !isEmpty && (
+          {fullName && fullName !== name && !isBye && !isEmpty && (
             <span className="text-[10px] text-gray-400 leading-tight max-w-[120px] truncate">
               {fullName}
             </span>
