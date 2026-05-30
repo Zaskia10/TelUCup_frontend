@@ -37,43 +37,30 @@ export default function TournamentBracket({ bracketData }: { bracketData: Bracke
                 <div className="flex-1 flex flex-col justify-center items-center relative">
                   {/* The Grand Final Match Wrapper - Centered */}
                   <div className="relative z-10 w-full flex flex-col items-center">
-                    {/* Championship Arena Box */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[320px] bg-red-50/40 border-2 border-red-100/60 rounded-[2.5rem] -z-10 flex flex-col items-center justify-between pt-6 pb-6 mt-[-20px]">
-                      <div className="bg-white border border-red-200 text-[#b6252a] text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-wider shadow-sm">
-                        Championship Arena
-                      </div>
-                      <div className="flex items-end gap-4 opacity-30 mt-auto">
-                        <svg className="w-6 h-6 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                        </svg>
-                        <svg className="w-10 h-10 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                        </svg>
-                        <svg className="w-6 h-6 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                        </svg>
-                      </div>
-                    </div>
-                    
                     {/* The Grand Final Match */}
                     {(() => {
                       const gfMatch = round.matches.find((m) => !m.isThirdPlace);
                       if (!gfMatch) return null;
                       return (
-                        <div className="match-wrapper relative z-10 w-full flex justify-center mt-[-40px]">
-                          <MatchCard match={gfMatch} />
+                        <div className="match-wrapper relative flex flex-col items-center bg-red-50/40 border-2 border-red-100/60 rounded-[2.5rem] p-6 pt-10">
+                          <div className="absolute -top-4 bg-white border border-red-200 text-[#b6252a] text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-wider shadow-sm">
+                            Championship Arena
+                          </div>
+                          <div className="relative z-10 w-full flex justify-center">
+                            <MatchCard match={gfMatch} />
+                          </div>
                         </div>
                       );
                     })()}
 
-                    {/* Third Place Container - Hung absolutely below GF Match */}
+                    {/* Third Place Container - Flowing naturally below GF Match */}
                     {(() => {
                        const tpMatch = round.matches.find((m) => m.isThirdPlace);
                        if (!tpMatch) return null;
                        return (
-                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[60px] flex flex-col items-center">
-                           <div className="bg-[#b6252a] text-white text-[11px] font-bold px-12 py-2.5 rounded-full uppercase shadow-md mb-6 relative z-10 tracking-widest">
-                             Juara 3
+                         <div className="flex flex-col items-center mt-12">
+                           <div className="bg-gradient-to-r from-orange-400 to-amber-500 text-white text-[11px] font-bold px-12 py-2.5 rounded-full uppercase shadow-md mb-6 tracking-widest border border-amber-200 z-10">
+                             Perebutan Juara 3
                            </div>
                            <div className="relative">
                              <MatchCard match={tpMatch} />

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import BracketFilter from "@/components/bracket/BracketFilter";
 import TournamentBracket from "@/components/bracket/TournamentBracket";
+import ChampionsBanner from "@/components/bracket/ChampionsBanner";
 import { getSports, getBracket } from "@/services/bracketService";
 import type { BracketData, Sport, SportCategory } from "@/types/bracket";
 
@@ -31,7 +32,14 @@ export default function BracketPage() {
     setIsLoading(true);
     try {
       const res = await getBracket(selectedSport.id, selectedCategory?.id);
-      setBracketData(res.data);
+      
+      const bracket = res.data;
+      if (bracket && bracket.rounds && bracket.rounds.length > 0 && bracket.third_place_match) {
+        const lastRound = bracket.rounds[bracket.rounds.length - 1];
+        bracket.third_place_match.isThirdPlace = true;
+        lastRound.matches.push(bracket.third_place_match);
+      }
+      setBracketData(bracket);
     } catch (error) {
       console.error("Failed to fetch bracket data", error);
       setBracketData(null);
@@ -94,7 +102,10 @@ export default function BracketPage() {
         {isLoading ? (
           <div className="text-center text-gray-500 py-20 font-medium">Memuat bagan...</div>
         ) : bracketData ? (
-          <TournamentBracket bracketData={bracketData} />
+          <>
+            <ChampionsBanner bracketData={bracketData} />
+            <TournamentBracket bracketData={bracketData} />
+          </>
         ) : (
           <div className="text-center text-gray-400 py-20 bg-white rounded-2xl shadow-sm border border-gray-100 mt-8">
             <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

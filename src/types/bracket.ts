@@ -17,6 +17,7 @@ export interface Sport {
 export interface Contingent {
   id: number;
   name: string;
+  abbreviation?: string;
 }
 
 export interface Player {

@@ -12,6 +12,8 @@ interface AdminMatchCardProps {
     sourceMatchId: number,
     sourceSlot: "a" | "b"
   ) => void;
+  onStart?: (matchId: number) => void;
+  onFinish?: (match: BracketMatch) => void;
 }
 
 export default function AdminMatchCard({
@@ -19,8 +21,13 @@ export default function AdminMatchCard({
   isSelected,
   onSelect,
   onDropTeam,
+  onStart,
+  onFinish,
 }: AdminMatchCardProps) {
   const isBye = match.status === "bye";
+  const isScheduled = match.status === "scheduled";
+  const isLive = match.status === "live";
+  const isFinished = match.status === "finished";
 
   const statusConfig = {
     live: {
@@ -106,16 +113,16 @@ export default function AdminMatchCard({
         </div>
       </button>
 
-      {/* Teams — draggable */}
+      {/* Teams */}
       <div className="p-3 pb-1 flex flex-col gap-1 relative">
         <div className="absolute left-6 top-7 bottom-7 w-px bg-gray-100" />
 
         <DraggableTeamRow
           matchId={match.id}
           slot="a"
-          name={match.team_a?.contingent.name ?? "TBD"}
+          name={match.team_a?.contingent.abbreviation ?? "TBD"}
           fullName={match.team_a?.contingent.name}
-          score={match.status === "bye" ? null : match.score_a}
+          score={isFinished ? match.score_a : null}
           isWinner={
             match.winner !== null &&
             match.team_a !== null &&
@@ -123,16 +130,16 @@ export default function AdminMatchCard({
           }
           isBye={isBye && !match.team_a}
           isEmpty={!match.team_a}
-          isLocked={match.status === "live" || match.status === "finished"}
+          isLocked={isLive || isFinished}
           onDropTeam={onDropTeam}
         />
 
         <DraggableTeamRow
           matchId={match.id}
           slot="b"
-          name={match.team_b?.contingent.name ?? "TBD"}
+          name={match.team_b?.contingent.abbreviation ?? "TBD"}
           fullName={match.team_b?.contingent.name}
-          score={match.status === "bye" ? null : match.score_b}
+          score={isFinished ? match.score_b : null}
           isWinner={
             match.winner !== null &&
             match.team_b !== null &&
@@ -140,16 +147,41 @@ export default function AdminMatchCard({
           }
           isBye={isBye && !match.team_b}
           isEmpty={!match.team_b}
-          isLocked={match.status === "live" || match.status === "finished"}
+          isLocked={isLive || isFinished}
           onDropTeam={onDropTeam}
         />
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/30 flex justify-between items-center mt-1">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-          {match.match_date ? (
-            <>
+      <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/30 flex flex-col gap-2 mt-1">
+        {/* Date/Location row */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+            {match.match_date ? (
+              <>
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                {match.match_date}
+              </>
+            ) : (
+              <span className="text-gray-300 italic text-[10px]">
+                Belum dijadwalkan
+              </span>
+            )}
+          </div>
+          {match.location && (
+            <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
               <svg
                 className="w-3 h-3"
                 fill="none"
@@ -160,39 +192,59 @@ export default function AdminMatchCard({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              {match.match_date}
-            </>
-          ) : (
-            <span className="text-gray-300 italic text-[10px]">
-              Belum dijadwalkan
-            </span>
+              {match.location}
+            </div>
           )}
         </div>
-        {match.location && (
-          <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
-            <svg
-              className="w-3 h-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+
+        {/* Mulai Pertandingan button — only for scheduled, non-bye */}
+        {isScheduled && !isBye && onStart && match.team_a && match.team_b && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStart(match.id);
+            }}
+            className="w-full flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg transition-all duration-150 shadow-sm"
+          >
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
             </svg>
-            {match.location}
+            Mulai Pertandingan
+          </button>
+        )}
+
+        {/* Selesaikan Pertandingan button — only for live, non-bye */}
+        {isLive && !isBye && onFinish && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFinish(match);
+            }}
+            className="w-full flex items-center justify-center gap-1.5 bg-[#b6252a] hover:bg-[#9a1e22] active:bg-[#7e191d] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg transition-all duration-150 shadow-sm"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+            Selesaikan Pertandingan
+          </button>
+        )}
+
+        {/* Live indicator bar */}
+        {isLive && (
+          <div className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-lg py-1.5 text-[11px] font-bold text-red-600">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+            Pertandingan Sedang Berlangsung
           </div>
         )}
       </div>
@@ -242,7 +294,6 @@ function DraggableTeamRow({
     );
     e.dataTransfer.effectAllowed = "move";
 
-    // Style the dragged element
     const el = e.currentTarget as HTMLElement;
     el.style.opacity = "0.5";
   };
@@ -276,7 +327,6 @@ function DraggableTeamRow({
 
     try {
       const source = JSON.parse(raw) as { matchId: number; slot: "a" | "b" };
-      // Don't drop on itself
       if (source.matchId === matchId && source.slot === slot) return;
       onDropTeam(matchId, slot, source.matchId, source.slot);
     } catch {

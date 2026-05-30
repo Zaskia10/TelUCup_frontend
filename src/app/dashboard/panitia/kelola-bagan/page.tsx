@@ -5,6 +5,7 @@ import AdminBracketFilter from "@/components/bracket/AdminBracketFilter";
 import AdminMatchCard from "@/components/bracket/AdminMatchCard";
 import MatchEditModal from "@/components/bracket/MatchEditPanel";
 import type { MatchUpdates } from "@/components/bracket/MatchEditPanel";
+import ChampionsBanner from "@/components/bracket/ChampionsBanner";
 import {
   getSports,
   getBracket,
@@ -40,6 +41,7 @@ export default function KelolaBaganPage() {
 
   // ── Modal state ──
   const [editingMatch, setEditingMatch] = useState<BracketMatch | null>(null);
+  const [openInFinishMode, setOpenInFinishMode] = useState(false);
 
   // ── Toast state ──
   const [toast, setToast] = useState<{
@@ -194,12 +196,13 @@ export default function KelolaBaganPage() {
     }
   };
 
-  const handleMatchSelect = (match: BracketMatch) => {
+  const handleMatchSelect = (match: BracketMatch, isFinishMode = false) => {
     // Cannot edit the dummy 3rd place match via API yet
     if (match.id === 999999) {
       showToast("Pertandingan Perebutan Juara 3 tidak dapat diedit sebelum Semifinal selesai", "info");
       return;
     }
+    setOpenInFinishMode(isFinishMode);
     setEditingMatch(match);
   };
 
@@ -210,6 +213,16 @@ export default function KelolaBaganPage() {
       showToast("Posisi tim A dan B berhasil ditukar.", "success");
     } catch (error) {
       showToast("Gagal menukar posisi tim", "error");
+    }
+  };
+
+  const handleStartMatch = async (matchId: number) => {
+    try {
+      await setMatchStatus(matchId, { status: "live" });
+      await loadBracket();
+      showToast("Pertandingan dimulai!", "success");
+    } catch (error) {
+      showToast("Gagal memulai pertandingan", "error");
     }
   };
 
@@ -312,8 +325,9 @@ export default function KelolaBaganPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffafa]">
-      <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col md:flex-row relative overflow-hidden">
+      {/* Decorative Background */}
+      <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 w-full min-h-screen">
         {/* Header */}
         <div className="mb-10">
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -472,6 +486,8 @@ export default function KelolaBaganPage() {
         {/* Bracket View */}
         {bracketData && (
           <div>
+            {/* Champions Banner */}
+            <ChampionsBanner bracketData={bracketData} />
             {/* Legend + drag hint */}
             <div className="flex flex-wrap justify-start items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-6">
               <div className="flex items-center gap-1.5">
@@ -551,55 +567,46 @@ export default function KelolaBaganPage() {
                         <div className="flex-1 flex flex-col justify-center items-center relative">
                           {/* The Grand Final Match Wrapper - Centered */}
                           <div className="relative z-10 w-full flex flex-col items-center">
-                            {/* Championship Arena Box */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[320px] bg-red-50/40 border-2 border-red-100/60 rounded-[2.5rem] -z-10 flex flex-col items-center justify-between pt-6 pb-6 mt-[-20px]">
-                              <div className="bg-white border border-red-200 text-[#b6252a] text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-wider shadow-sm">
-                                Championship Arena
-                              </div>
-                              <div className="flex items-end gap-4 opacity-30 mt-auto">
-                                <svg className="w-6 h-6 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                                </svg>
-                                <svg className="w-10 h-10 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                                </svg>
-                                <svg className="w-6 h-6 text-[#b6252a]" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2l-1 4h-4l3 3-1 4 3-2 3 2-1-4 3-3h-4z" />
-                                </svg>
-                              </div>
-                            </div>
-                            
                             {/* The Grand Final Match */}
                             {(() => {
                               const gfMatch = round.matches.find((m) => !m.isThirdPlace);
                               if (!gfMatch) return null;
                               return (
-                                <div className="match-wrapper relative z-10 w-full flex justify-center mt-[-40px]">
-                                  <AdminMatchCard
-                                    match={gfMatch}
-                                    isSelected={editingMatch?.id === gfMatch.id}
-                                    onSelect={handleMatchSelect}
-                                    onDropTeam={handleDropTeam}
-                                  />
+                                <div className="match-wrapper relative flex flex-col items-center bg-red-50/40 border-2 border-red-100/60 rounded-[2.5rem] p-6 pt-10">
+                                  <div className="absolute -top-4 bg-white border border-red-200 text-[#b6252a] text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-wider shadow-sm">
+                                    Championship Arena
+                                  </div>
+                                  <div className="relative z-10 w-full flex justify-center">
+                                    <AdminMatchCard
+                                      match={gfMatch}
+                                      isSelected={editingMatch?.id === gfMatch.id}
+                                      onSelect={(m) => handleMatchSelect(m, false)}
+                                      onDropTeam={handleDropTeam}
+                                      onStart={handleStartMatch}
+                                      onFinish={(m) => handleMatchSelect(m, true)}
+                                    />
+                                  </div>
                                 </div>
                               );
                             })()}
 
-                            {/* Third Place Container - Hung absolutely below GF Match */}
+                            {/* Third Place Container - Flowing naturally below GF Match */}
                             {(() => {
                                const tpMatch = round.matches.find((m) => m.isThirdPlace);
                                if (!tpMatch) return null;
                                return (
-                                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[60px] flex flex-col items-center">
-                                   <div className="bg-[#b6252a] text-white text-[11px] font-bold px-12 py-2.5 rounded-full uppercase shadow-md mb-6 relative z-10 tracking-widest">
-                                     Juara 3
+                                 <div className="flex flex-col items-center mt-12">
+                                   <div className="bg-gradient-to-r from-orange-400 to-amber-500 text-white text-[11px] font-bold px-12 py-2.5 rounded-full uppercase shadow-md mb-6 tracking-widest border border-amber-200 z-10">
+                                     Perebutan Juara 3
                                    </div>
                                    <div className="relative">
                                      <AdminMatchCard
                                        match={tpMatch}
                                        isSelected={editingMatch?.id === tpMatch.id}
-                                       onSelect={handleMatchSelect}
+                                       onSelect={(m) => handleMatchSelect(m, false)}
                                        onDropTeam={handleDropTeam}
+                                       onStart={handleStartMatch}
+                                       onFinish={(m) => handleMatchSelect(m, true)}
                                      />
                                    </div>
                                  </div>
@@ -624,8 +631,10 @@ export default function KelolaBaganPage() {
                               <AdminMatchCard
                                 match={match}
                                 isSelected={editingMatch?.id === match.id}
-                                onSelect={handleMatchSelect}
+                                onSelect={(m) => handleMatchSelect(m, false)}
                                 onDropTeam={handleDropTeam}
+                                onStart={handleStartMatch}
+                                onFinish={(m) => handleMatchSelect(m, true)}
                               />
                             </div>
                           );
@@ -649,6 +658,8 @@ export default function KelolaBaganPage() {
           onClose={() => setEditingMatch(null)}
           onSave={handleSaveMatch}
           onSwap={handleSwap}
+          onStart={handleStartMatch}
+          openInFinishMode={openInFinishMode}
         />
       )}
 

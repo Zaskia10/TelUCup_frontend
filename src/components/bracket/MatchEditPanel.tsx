@@ -9,6 +9,8 @@ interface MatchEditModalProps {
   onClose: () => void;
   onSave: (matchId: number, updates: MatchUpdates) => void;
   onSwap: (matchId: number) => void;
+  onStart?: (matchId: number) => void;
+  openInFinishMode?: boolean;
 }
 
 export interface MatchUpdates {
@@ -31,8 +33,14 @@ export default function MatchEditModal({
   onClose,
   onSave,
   onSwap,
+  onStart,
+  openInFinishMode = false,
 }: MatchEditModalProps) {
   const isBye = match.status === "bye";
+  const isLocked = match.status === "finished";
+  // live is only locked for team changes, not for finishing
+  const isTeamLocked = isBye || match.status === "live" || match.status === "finished";
+  const isScheduled = match.status === "scheduled";
 
   const [teamAId, setTeamAId] = useState<number | null>(
     match.team_a?.registration_id ?? null
@@ -47,7 +55,9 @@ export default function MatchEditModal({
   const [location, setLocation] = useState(match.location ?? "");
   const [refereeName, setRefereeName] = useState(match.referee_name ?? "");
   const [status, setStatus] = useState<"scheduled" | "live" | "finished">(
-    match.status === "bye"
+    openInFinishMode
+      ? "finished"
+      : match.status === "bye"
       ? "scheduled"
       : (match.status as "scheduled" | "live" | "finished")
   );
@@ -55,6 +65,7 @@ export default function MatchEditModal({
   const [winnerId, setWinnerId] = useState<number | null>(
     match.winner?.registration_id ?? null
   );
+  const [scoreError, setScoreError] = useState(false);
 
   const teamA = teamAId
     ? registrations.find((r) => r.id === teamAId) || match.team_a
@@ -75,27 +86,42 @@ export default function MatchEditModal({
     finished: "bg-gray-700 text-white border-gray-700",
   };
 
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await Promise.resolve(onSave(match.id, {
-        registrationAId: teamAId,
-        registrationBId: teamBId,
-        scoreA,
-        scoreB,
-        matchDate,
-        matchTime,
-        location,
-        refereeName,
-        status,
-        notes,
-        winnerId,
-      }));
-    } finally {
-      setIsSaving(false);
+  const handleSave = () => {
+    // Validation: if status is finished, winner must be selected
+    if (status === "finished" && winnerId === null) {
+      setScoreError(true);
+      return;
     }
+    setScoreError(false);
+    onSave(match.id, {
+      registrationAId: teamAId,
+      registrationBId: teamBId,
+      scoreA,
+      scoreB,
+      matchDate,
+      matchTime,
+      location,
+      refereeName,
+      status,
+      notes,
+      winnerId,
+    });
+  };
+
+  // Auto-compute winner when score changes
+  const handleScoreAChange = (val: number) => {
+    setScoreA(val);
+    setScoreError(false);
+    if (val > scoreB && teamAId) setWinnerId(teamAId);
+    else if (val < scoreB && teamBId) setWinnerId(teamBId);
+    // Equal score: keep current or leave null
+  };
+
+  const handleScoreBChange = (val: number) => {
+    setScoreB(val);
+    setScoreError(false);
+    if (val > scoreA && teamBId) setWinnerId(teamBId);
+    else if (val < scoreA && teamAId) setWinnerId(teamAId);
   };
 
   const handleLocalSwap = () => {
@@ -116,9 +142,9 @@ export default function MatchEditModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[540px] max-h-[85vh] flex flex-col animate-[modalIn_0.25s_ease-out]">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[560px] max-h-[90vh] flex flex-col animate-[modalIn_0.25s_ease-out]">
         {/* ── Header ── */}
-        <div className="px-6 pt-6 pb-4 flex items-start justify-between">
+        <div className="px-6 pt-6 pb-4 flex items-start justify-between border-b border-gray-100">
           <div>
             <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
               Detail Pertandingan
@@ -132,26 +158,17 @@ export default function MatchEditModal({
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* ── Scrollable content ── */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
           {/* Status badge row */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center">
             <div className="inline-flex items-center gap-2">
               {(["scheduled", "live", "finished"] as const).map((s) => (
                 <button
@@ -180,171 +197,176 @@ export default function MatchEditModal({
           </div>
 
           {isBye && (
-            <div className="mb-5 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-100 text-xs font-bold text-amber-700 text-center">
+            <div className="px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-100 text-xs font-bold text-amber-700 text-center">
               ⚠ Pertandingan BYE — Tim otomatis maju ke babak berikutnya
             </div>
           )}
 
-          {/* ── Versus layout ── */}
-          <div className="flex items-center justify-center gap-3 mb-2">
+          {/* ── Tombol Mulai Pertandingan (scheduled only) ── */}
+          {isScheduled && !isBye && onStart && teamAId && teamBId && (
+            <button
+              type="button"
+              onClick={() => {
+                onStart(match.id);
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-sm text-sm"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Mulai Pertandingan
+            </button>
+          )}
+
+          {/* Live indicator */}
+          {match.status === "live" && (
+            <div className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-xl py-2.5 text-sm font-bold text-red-600">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+              Pertandingan Sedang Berlangsung
+            </div>
+          )}
+
+          {/* ── Team Slots ── */}
+          <div className="space-y-3">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              Tim Pertandingan
+            </label>
+
             {/* Team A */}
-            <div className="flex flex-col items-center w-[140px]">
-              <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-black border-2 mb-2 ${
-                  teamA
-                    ? "bg-red-50 border-[#b6252a]/20 text-[#b6252a]"
-                    : "bg-gray-50 border-gray-200 text-gray-300"
-                }`}
-              >
-                {teamA ? teamA.contingent.name.charAt(0) : "?"}
-              </div>
-              <select
-                value={teamAId ?? ""}
-                onChange={(e) =>
-                  setTeamAId(e.target.value ? Number(e.target.value) : null)
-                }
-                disabled={isBye || status === "live" || status === "finished"}
-                className="w-full text-center text-xs font-bold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 appearance-none cursor-pointer disabled:cursor-not-allowed disabled:text-gray-300 truncate"
-                title="Klik untuk ganti tim"
-              >
-                <option value="">TBD</option>
-                {registrations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.contingent.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[10px] text-gray-400 mt-0.5 truncate max-w-full text-center">
-                {teamA ? teamA.contingent.name : "Belum ditentukan"}
-              </p>
-            </div>
+            <TeamSlot
+              label="Tim A"
+              slotColor="red"
+              selectedId={teamAId}
+              registrations={registrations}
+              isLocked={isTeamLocked}
+              onSelect={setTeamAId}
+              onClear={() => setTeamAId(null)}
+            />
 
-            {/* Scores */}
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                value={scoreA}
-                onChange={(e) => setScoreA(Number(e.target.value))}
-                disabled={isBye}
-                className="w-12 h-12 rounded-xl border-2 border-gray-200 text-center text-xl font-black text-gray-900 focus:outline-none focus:border-[#b6252a] focus:ring-2 focus:ring-[#b6252a]/10 transition-colors disabled:bg-gray-50 disabled:text-gray-300"
-              />
-              <span className="text-gray-300 font-bold text-lg">—</span>
-              <input
-                type="number"
-                min={0}
-                value={scoreB}
-                onChange={(e) => setScoreB(Number(e.target.value))}
-                disabled={isBye}
-                className="w-12 h-12 rounded-xl border-2 border-gray-200 text-center text-xl font-black text-gray-900 focus:outline-none focus:border-[#b6252a] focus:ring-2 focus:ring-[#b6252a]/10 transition-colors disabled:bg-gray-50 disabled:text-gray-300"
-              />
-
-              {/* Swap button */}
-              <button
-                type="button"
-                onClick={handleLocalSwap}
-                disabled={isBye || status === "live" || status === "finished"}
-                title="Tukar posisi tim"
-                className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#b6252a] hover:border-[#b6252a]/30 hover:bg-red-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            {/* Swap button between teams */}
+            {!isBye && !isTeamLocked && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleLocalSwap}
+                  title="Tukar posisi tim A dan B"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-gray-400 hover:text-[#b6252a] hover:border-[#b6252a]/30 hover:bg-red-50 text-[11px] font-bold transition-all"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                  />
-                </svg>
-              </button>
-            </div>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  Tukar Posisi A ↔ B
+                </button>
+              </div>
+            )}
 
             {/* Team B */}
-            <div className="flex flex-col items-center w-[140px]">
-              <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-black border-2 mb-2 ${
-                  teamB
-                    ? "bg-blue-50 border-blue-200 text-blue-600"
-                    : "bg-gray-50 border-gray-200 text-gray-300"
-                }`}
-              >
-                {teamB ? teamB.contingent.name.charAt(0) : "?"}
-              </div>
-              <select
-                value={teamBId ?? ""}
-                onChange={(e) =>
-                  setTeamBId(e.target.value ? Number(e.target.value) : null)
-                }
-                disabled={isBye || status === "live" || status === "finished"}
-                className="w-full text-center text-xs font-bold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 appearance-none cursor-pointer disabled:cursor-not-allowed disabled:text-gray-300 truncate"
-                title="Klik untuk ganti tim"
-              >
-                <option value="">TBD</option>
-                {registrations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.contingent.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[10px] text-gray-400 mt-0.5 truncate max-w-full text-center">
-                {teamB ? teamB.contingent.name : "Belum ditentukan"}
-              </p>
-            </div>
+            <TeamSlot
+              label="Tim B"
+              slotColor="blue"
+              selectedId={teamBId}
+              registrations={registrations}
+              isLocked={isTeamLocked}
+              onSelect={setTeamBId}
+              onClear={() => setTeamBId(null)}
+            />
           </div>
 
-          {/* Winner Selection */}
-          {!isBye && (
-            <div className="mt-4 mb-4 bg-gray-50 rounded-xl p-3 border border-gray-100 flex flex-col items-center">
+          {/* ── Score & Winner (only when finished) ── */}
+          {status === "finished" && !isBye && (
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-4">
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Pemenang Pertandingan
+                Skor & Pemenang
               </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWinnerId(teamAId)}
-                  disabled={!teamAId}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                    winnerId === teamAId && teamAId !== null
-                      ? "bg-red-50 text-[#b6252a] border-[#b6252a]/30"
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {teamA ? teamA.contingent.name : "Tim A"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWinnerId(null)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                    winnerId === null
-                      ? "bg-gray-200 text-gray-700 border-gray-300"
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  Belum Ada
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWinnerId(teamBId)}
-                  disabled={!teamBId}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                    winnerId === teamBId && teamBId !== null
-                      ? "bg-blue-50 text-blue-600 border-blue-200"
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {teamB ? teamB.contingent.name : "Tim B"}
-                </button>
+
+              {scoreError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 mb-3">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Tentukan skor dan pemenang sebelum menyelesaikan pertandingan!
+                </div>
+              )}
+
+              {/* Score inputs */}
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {teamA ? (teamA.contingent.abbreviation ?? teamA.contingent.name) : "Tim A"}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={scoreA}
+                    onChange={(e) => handleScoreAChange(Number(e.target.value))}
+                    className="w-16 h-14 rounded-xl border-2 border-gray-200 text-center text-2xl font-black text-gray-900 focus:outline-none focus:border-[#b6252a] focus:ring-2 focus:ring-[#b6252a]/10 transition-colors"
+                  />
+                </div>
+                <span className="text-gray-300 font-bold text-2xl mt-4">—</span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {teamB ? (teamB.contingent.abbreviation ?? teamB.contingent.name) : "Tim B"}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={scoreB}
+                    onChange={(e) => handleScoreBChange(Number(e.target.value))}
+                    className="w-16 h-14 rounded-xl border-2 border-gray-200 text-center text-2xl font-black text-gray-900 focus:outline-none focus:border-[#b6252a] focus:ring-2 focus:ring-[#b6252a]/10 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Winner selector */}
+              <div className="flex flex-col items-center gap-2">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Pemenang
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWinnerId(teamAId)}
+                    disabled={!teamAId}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      winnerId === teamAId && teamAId !== null
+                        ? "bg-red-50 text-[#b6252a] border-[#b6252a]/30"
+                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {teamA ? (teamA.contingent.abbreviation ?? teamA.contingent.name) : "Tim A"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWinnerId(null)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      winnerId === null
+                        ? "bg-gray-200 text-gray-700 border-gray-300"
+                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    Belum Ada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWinnerId(teamBId)}
+                    disabled={!teamBId}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      winnerId === teamBId && teamBId !== null
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {teamB ? (teamB.contingent.abbreviation ?? teamB.contingent.name) : "Tim B"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* ── Aksi Wasit / Notes ── */}
-          <div className="mt-5 mb-5">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 text-center">
+          {/* ── Notes ── */}
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
               Catatan
             </label>
             <textarea
@@ -356,50 +378,24 @@ export default function MatchEditModal({
             />
           </div>
 
-          {/* ── Divider ── */}
-          <div className="border-t border-gray-100 my-1" />
-
           {/* ── Informasi Umum ── */}
-          <div className="pt-4">
-            <h4 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+          <div>
+            <h4 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Informasi Umum
+              Informasi Jadwal
             </h4>
-
             <div className="space-y-3">
               {/* Tanggal */}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    Tanggal
-                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tanggal</span>
                   <input
                     type="date"
                     value={matchDate}
@@ -408,28 +404,15 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-
               {/* Waktu */}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    Waktu
-                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Waktu</span>
                   <input
                     type="time"
                     value={matchTime}
@@ -438,28 +421,15 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-
               {/* Wasit */}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    Wasit
-                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Wasit</span>
                   <input
                     type="text"
                     value={refereeName}
@@ -469,34 +439,16 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-
               {/* Lokasi */}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    Lokasi
-                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lokasi</span>
                   <input
                     type="text"
                     value={location}
@@ -512,60 +464,109 @@ export default function MatchEditModal({
 
         {/* ── Footer ── */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
-          <a
-            href="/verifikasi"
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-[#b6252a] hover:bg-[#9a1e22] text-white text-sm font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 transition-colors"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Check-in Pemain
-          </a>
+            Batal
+          </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={isBye || isSaving}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md min-w-[140px]"
+            disabled={isBye}
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold py-2.5 px-5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
           >
-            {isSaving ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Simpan
-              </>
-            )}
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Simpan Perubahan
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────
+//  TeamSlot sub-component
+// ─────────────────────────────────────────────────────
+function TeamSlot({
+  label,
+  slotColor,
+  selectedId,
+  registrations,
+  isLocked,
+  onSelect,
+  onClear,
+}: {
+  label: string;
+  slotColor: "red" | "blue";
+  selectedId: number | null;
+  registrations: Registration[];
+  isLocked: boolean;
+  onSelect: (id: number | null) => void;
+  onClear: () => void;
+}) {
+  const selected = registrations.find((r) => r.id === selectedId) ?? null;
+
+  const avatarBg =
+    slotColor === "red"
+      ? "bg-red-50 border-[#b6252a]/20 text-[#b6252a]"
+      : "bg-blue-50 border-blue-200 text-blue-600";
+  const emptyBg = "bg-gray-50 border-gray-200 text-gray-300";
+
+  return (
+    <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+      {/* Avatar */}
+      <div
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black border-2 flex-shrink-0 ${
+          selected ? avatarBg : emptyBg
+        }`}
+      >
+        {selected ? (selected.contingent.abbreviation ?? selected.contingent.name).charAt(0) : "?"}
+      </div>
+
+      {/* Info + dropdown */}
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+          {label}
+        </span>
+        {isLocked ? (
+          <p className="text-sm font-bold text-gray-800 truncate">
+            {selected ? selected.contingent.name : "Belum ditentukan"}
+          </p>
+        ) : (
+          <select
+            value={selectedId ?? ""}
+            onChange={(e) =>
+              onSelect(e.target.value ? Number(e.target.value) : null)
+            }
+            className="w-full text-sm font-bold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 appearance-none cursor-pointer mt-0.5"
+          >
+            <option value="">— Pilih tim —</option>
+            {registrations.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.contingent.name} ({r.contingent.abbreviation})
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Clear button */}
+      {!isLocked && selectedId && (
+        <button
+          type="button"
+          onClick={onClear}
+          title="Kosongkan slot ini"
+          className="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-300 hover:bg-red-50 transition-all flex-shrink-0"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
