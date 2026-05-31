@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  Types — mirror backend API shapes
-// ─────────────────────────────────────────────────────────────
-
 export interface SportCategory {
   id: number;
   name: string;
@@ -41,12 +37,40 @@ export interface MatchTeam {
   players?: Player[];
 }
 
+export type MatchSlot = "a" | "b";
+export type MatchStatus = "scheduled" | "live" | "finished" | "bye";
+export type ToastType = "success" | "error" | "info";
+
+export interface ToastState {
+  message: string;
+  type: ToastType;
+}
+
+export interface BracketQueryParams {
+  sport_id: number;
+  sport_category_id?: number | null;
+}
+
+export interface MatchSavePayload {
+  matchDate?: string | null;
+  matchTime?: string | null;
+  location?: string | null;
+  refereeName?: string | null;
+  notes?: string | null;
+  registrationAId?: number | null;
+  registrationBId?: number | null;
+  scoreA: number;
+  scoreB: number;
+  status: MatchStatus;
+  winnerId?: number | null;
+}
+
 export interface BracketMatch {
   id: number;
   round: number;
   round_name: string;
   match_number: number;
-  status: "scheduled" | "live" | "finished" | "bye";
+  status: MatchStatus;
   match_date: string | null;
   match_time: string | null;
   location: string | null;
@@ -58,8 +82,8 @@ export interface BracketMatch {
   team_b: MatchTeam | null;
   winner: MatchTeam | null;
   next_match_id: number | null;
-  next_match_slot: "a" | "b" | null;
-  isThirdPlace?: boolean; // Frontend flag
+  next_match_slot: MatchSlot | null;
+  isThirdPlace?: boolean;
 }
 
 export interface BracketRound {
