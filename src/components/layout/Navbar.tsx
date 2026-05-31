@@ -12,7 +12,7 @@ const navLinks = [
   { label: "Pertandingan", href: `${BASE_URL}/matches` },
   { label: "Bagan", href: "/chart" },
   { label: "Peserta", href: `${BASE_URL}/participants` },
-  { label: "Galeri", href: `${BASE_URL}/gallery` },
+  { label: "Galeri", href: `/galeri` },
   { label: "Log In", href: `/login` },
 ];
 
