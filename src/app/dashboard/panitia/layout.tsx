@@ -8,6 +8,7 @@ import {
   Camera,
   Users,
   Medal,
+  ShieldCheck,
 } from "lucide-react";
 import DashboardShell, { type MenuItem } from "@/components/layout/DashboardShell";
 
@@ -16,6 +17,7 @@ const menuItems: MenuItem[] = [
   { name: "Verifikasi Pendaftaran Tim", icon: FileText, href: "/dashboard/panitia/verifikasi-tim" },
   { name: "Bagan, Pertandingan & Verifikasi Lapangan", icon: Trophy, href: "/dashboard/panitia/kelola-bagan" },
   { name: "Tinjauan Medis (Self-Assessment)", icon: Stethoscope, href: "/dashboard/panitia/medis" },
+  { name: "Poster Sportifitas", icon: ShieldCheck, href: "/dashboard/panitia/poster-sportifitas" },
   { name: "Kelola Galeri Event", icon: Camera, href: "/dashboard/panitia/galeri" },
   { name: "Kelola Kontingen & Pengguna", icon: Users, href: "/dashboard/panitia/kontingen" },
   { name: "Pengaturan Cabang Olahraga", icon: Medal, href: "/dashboard/panitia/sports" },

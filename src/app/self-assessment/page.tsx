@@ -3,8 +3,10 @@
 import { useState, useEffect, FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementModal from "@/components/modal/AnnouncementModal";
+import SportsmanshipReminderModal from "@/components/modal/SportsmanshipReminderModal";
 import { getQuestionnaire, submitSelfAssessment } from "@/services/selfAssessmentService";
 import { Loader2 } from "lucide-react";
+import { useActiveSportsmanshipPosters } from "@/hooks/useActiveSportsmanshipPosters";
 
 // Types
 type QuestionType = "number" | "single_choice" | "boolean" | "open_text" | "scale" | "multi_choice";
@@ -102,10 +104,15 @@ export default function SelfAssessmentPage() {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [assessmentId, setAssessmentId] = useState<number | null>(null);
+
+  const { posters: activePosters, fetchActivePosters, isLoading: isLoadingPosters } = useActiveSportsmanshipPosters();
 
   useEffect(() => {
     const fetchQ = async () => {
@@ -148,21 +155,46 @@ export default function SelfAssessmentPage() {
       const payload = { player_id: null, answers };
       const result = await submitSelfAssessment(payload) as unknown as { data?: { id: number } };
       setAssessmentId(result.data?.id ?? null);
-      setShowAnnouncementModal(true);
+      
+      // Fetch active posters without blocking the flow completely if it fails
+      try {
+        await fetchActivePosters();
+      } catch (e) {
+        // Silently handle if poster fetch fails, let it fallback to default modal
+      }
+      
     } catch (err) {
       const message = err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim self-assessment";
       setSubmitError(message);
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Trigger correct modal after fetching posters
+  useEffect(() => {
+    if (assessmentId !== null && !isLoadingPosters) {
+      if (activePosters && activePosters.length > 0) {
+        setShowReminderModal(true);
+      } else {
+        // Fallback to old modal if no active posters or error fetching
+        setShowAnnouncementModal(true);
+      }
+      setIsSubmitting(false);
+    }
+  }, [assessmentId, isLoadingPosters, activePosters]);
 
   const handleResetForm = () => {
     if (confirm("Apakah Anda yakin ingin mereset semua jawaban?")) {
       setAnswers({});
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const proceedToResult = () => {
+    setShowAnnouncementModal(false);
+    setShowReminderModal(false);
+    router.replace(assessmentId ? `/self-assessment/hasil?id=${assessmentId}` : "/self-assessment/hasil");
   };
 
   if (loading) {
@@ -406,12 +438,12 @@ export default function SelfAssessmentPage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLoadingPosters}
                 className="flex-1 sm:flex-none rounded-lg bg-[#B41F2A] px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#981A24] hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isSubmitting ? (
+                {isSubmitting || isLoadingPosters ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 size={15} className="animate-spin" /> Mengirim...
+                    <Loader2 size={15} className="animate-spin" /> Memproses...
                   </span>
                 ) : "Kirim Assessment →"}
               </button>
@@ -420,18 +452,24 @@ export default function SelfAssessmentPage() {
         </form>
       </div>
 
+      {/* Fallback old modal if no poster exists */}
       <AnnouncementModal
         isOpen={showAnnouncementModal}
         onClose={() => setShowAnnouncementModal(false)}
-        onPrimaryClick={() => {
-          setShowAnnouncementModal(false);
-          router.replace(assessmentId ? `/self-assessment/hasil?id=${assessmentId}` : "/self-assessment/hasil");
-        }}
+        onPrimaryClick={proceedToResult}
         title="Assessment Berhasil Disimpan!"
         category="Self Assessment Selesai"
         description="Hasil analisis risiko kesehatan Anda telah diproses. Klik tombol di bawah untuk melihat hasil evaluasi lengkap."
         primaryButtonText="Lihat Hasil Assessment →"
         secondaryButtonText="Tutup"
+      />
+
+      {/* New Sportsmanship Poster Modal */}
+      <SportsmanshipReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        onContinue={proceedToResult}
+        posters={activePosters || []}
       />
     </main>
   );

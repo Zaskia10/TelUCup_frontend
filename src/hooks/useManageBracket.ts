@@ -60,7 +60,7 @@ export function useManageBracket() {
       const res = await getRegistrations(sportId, categoryId);
       const data = res.data;
       setRegistrations(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch {
       setRegistrations([]);
     }
   };
@@ -112,7 +112,10 @@ export function useManageBracket() {
   }, [searchParams, showToast]);
 
   useEffect(() => {
-    fetchSports();
+    const init = async () => {
+      await fetchSports();
+    };
+    init();
   }, [fetchSports]);
 
   // ── Auto Refresh ──
@@ -120,10 +123,16 @@ export function useManageBracket() {
     let interval: NodeJS.Timeout;
 
     if (selectedSport && (!selectedSport.categories.length || selectedCategory)) {
-      loadBracket(selectedSport.id, selectedCategory?.id);
+      const sid = selectedSport.id;
+      const cid = selectedCategory?.id;
+      
+      const fetchInitial = async () => {
+        await loadBracket(sid, cid);
+      };
+      fetchInitial();
 
       interval = setInterval(() => {
-        loadBracket(selectedSport.id, selectedCategory?.id);
+        loadBracket(sid, cid);
       }, BRACKET_REFRESH_INTERVAL_MS);
     }
 
