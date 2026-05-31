@@ -45,7 +45,8 @@ export default function Navbar() {
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/self-assessment") ||
     pathname?.startsWith("/match") ||
-    pathname?.startsWith("/verifikasi")
+    pathname?.startsWith("/verifikasi") ||
+    pathname?.startsWith("/onboarding")
   ) {
     return null;
   }

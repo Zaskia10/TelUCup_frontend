@@ -249,8 +249,21 @@ export default function SelfAssessmentPage() {
         // Silently handle if poster fetch fails, let it fallback to default modal
       }
       
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim self-assessment";
+    } catch (err: any) {
+      let message = "Terjadi kesalahan saat mengirim self-assessment";
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err && typeof err === "object") {
+        if (typeof err.message === "string") {
+          message = err.message;
+        }
+        if (err.errors && typeof err.errors === "object") {
+          const detailMsgs = Object.values(err.errors).flat().join(", ");
+          if (detailMsgs) {
+            message = `${message}: ${detailMsgs}`;
+          }
+        }
+      }
       setSubmitError(message);
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
       setIsSubmitting(false);
@@ -471,13 +484,7 @@ export default function SelfAssessmentPage() {
                           </div>
                         </div>
                       )}
-                      
-                      {/* Notes / Tips */}
-                      {q.notes && (
-                         <div className="mt-3 bg-blue-50/50 border border-blue-100 p-3 rounded-md">
-                           <p className="text-xs text-blue-700"><span className="font-bold mr-1">ℹ</span> {q.notes}</p>
-                         </div>
-                      )}
+
                     </div>
                   </QuestionBox>
                 );
