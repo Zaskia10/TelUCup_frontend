@@ -101,9 +101,9 @@ function KelolaBaganContent() {
   const fetchRegistrations = async (sportId: number, categoryId?: number | null) => {
     try {
       const res = await getRegistrations(sportId, categoryId);
-      setRegistrations(res.data.data || res.data); // Adjust based on actual API pagination
+      const data = res.data;
+      setRegistrations(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Gagal memuat tim terdaftar", error);
       setRegistrations([]);
     }
   };
@@ -114,7 +114,7 @@ function KelolaBaganContent() {
       const res = await getBracket(selectedSport.id, selectedCategory?.id);
       
       // Inject real "Perebutan Juara 3" match to the frontend from backend data
-      const bracket: BracketData = res.data;
+      const bracket = res.data as BracketData;
       if (bracket && bracket.rounds && bracket.rounds.length > 0 && bracket.third_place_match) {
         const lastRound = bracket.rounds[bracket.rounds.length - 1];
         bracket.third_place_match.isThirdPlace = true;
@@ -122,8 +122,9 @@ function KelolaBaganContent() {
       }
       
       setBracketData(bracket);
-    } catch (error: any) {
-      if (error?.status !== 404) {
+    } catch (error: unknown) {
+      const err = error as { status?: number; message?: string };
+      if (err?.status !== 404) {
         showToast("Gagal memuat data bagan", "error");
       }
       setBracketData(null);

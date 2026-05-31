@@ -59,7 +59,7 @@ export default function PICKontingenDashboardOverview() {
           getMyRegistrations().catch(() => ({ data: [] })) // Fallback jika gagal
         ]);
         
-        const contingentData = contingentRes.data || contingentRes; // Just in case it's not wrapped in data
+        const contingentData = (contingentRes.data || contingentRes) as any;
         setKontingenInfo({
           name: contingentData.name || "Nama Kontingen",
           picName: contingentData.pic?.name || "-",

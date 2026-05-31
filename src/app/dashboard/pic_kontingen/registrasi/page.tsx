@@ -23,8 +23,8 @@ import {
   addPlayersToRegistration, 
   removePlayerFromRegistration, 
   submitRegistration,
-  getMyContingentPlayers
 } from "@/services/registrationService";
+import { getMyContingentPlayers } from "@/services/contingentService";
 import { getSports } from "@/services/bracketService";
 
 export default function RegistrasiTimPage() {

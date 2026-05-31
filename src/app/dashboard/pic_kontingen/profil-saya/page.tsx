@@ -202,7 +202,7 @@ export default function ProfilSayaPage() {
 
       if (assessmentRes.status === "fulfilled") {
         if (assessmentRes.value.data) {
-          setAssessment(assessmentRes.value.data);
+          setAssessment(assessmentRes.value.data as any);
         } else {
           setHasNoAssessment(true);
         }

@@ -38,7 +38,7 @@ export function useBracketData() {
     
     try {
       const res = await getBracket(selectedSport.id, selectedCategory?.id);
-      const bracket = res.data;
+      const bracket = res.data as BracketData;
       
       const normalizedData = normalizeBracketData(bracket);
       setBracketData(normalizedData);

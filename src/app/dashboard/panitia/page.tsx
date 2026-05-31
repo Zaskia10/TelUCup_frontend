@@ -1,180 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Building2, 
   Clock, 
   Swords, 
   AlertTriangle,
-  ChevronDown,
-  UserPlus,
   ArrowUpRight
 } from "lucide-react";
 import MatchCard from "@/components/match/MatchCard";
+import { usePanitiaDashboard, type DashboardStats } from "@/hooks/usePanitiaDashboard";
+
+const QUICK_STATS_CONFIG = [
+  { 
+    key: "totalKontingen" as keyof DashboardStats,
+    label: "Total Kontingen", 
+    subtext: "Fakultas / Unit", 
+    icon: Building2, 
+    bgColor: "bg-blue-50", 
+    textColor: "text-blue-600",
+    border: "border-gray-100" 
+  },
+  { 
+    key: "timMenunggu" as keyof DashboardStats,
+    label: "Tim Menunggu Verifikasi", 
+    subtext: "Perlu ditinjau", 
+    icon: Clock, 
+    bgColor: "bg-orange-50", 
+    textColor: "text-orange-600",
+    border: "border-orange-200 ring-1 ring-orange-100 shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
+  },
+  { 
+    key: "pertandinganHariIni" as keyof DashboardStats,
+    label: "Pertandingan Hari Ini", 
+    subtext: "Jadwal aktif", 
+    icon: Swords, 
+    bgColor: "bg-emerald-50", 
+    textColor: "text-emerald-600",
+    border: "border-gray-100" 
+  },
+  { 
+    key: "redFlags" as keyof DashboardStats,
+    label: "Peringatan Medis", 
+    subtext: "High Risk", 
+    icon: AlertTriangle, 
+    bgColor: "bg-red-50", 
+    textColor: "text-red-600",
+    border: "border-red-200 ring-1 ring-red-100 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
+  },
+];
 
 export default function AdminDashboardOverview() {
-  const [stats, setStats] = useState({
-    totalKontingen: 0,
-    timMenunggu: 0,
-    pertandinganHariIni: 0,
-    redFlags: 0
-  });
-  
-  const [matches, setMatches] = useState<any[]>([]);
-  const [contingents, setContingents] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const headers = {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json"
-        };
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-        // 1. Fetch Summary Risk
-        let totalRedFlags = 0;
-        try {
-          const riskRes = await fetch(`${apiUrl}/self-assessment/summary/contingent`, { headers });
-          if (riskRes.ok) {
-            const riskData = await riskRes.json();
-            if (Array.isArray(riskData)) {
-              totalRedFlags = riskData.reduce((acc, curr) => acc + (curr.high_risk_count || 0), 0);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to fetch risk summary", e);
-        }
-
-        // 2. Fetch Contingents & Registrations
-        let contingentsList: any[] = [];
-        let waitingVerification = 0;
-        
-        try {
-          const contRes = await fetch(`${apiUrl}/contingents`, { headers });
-          if (contRes.ok) {
-            const contDataJson = await contRes.json();
-            const contingentsData = contDataJson.data || [];
-            
-            contingentsList = contingentsData.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              pic: c.pic?.name || "Tidak ada PIC",
-              players: c.players_count || 0
-            }));
-          }
-        } catch (e) {
-          console.error("Failed to fetch contingents", e);
-        }
-
-        try {
-          const regRes = await fetch(`${apiUrl}/registrations`, { headers });
-          if (regRes.ok) {
-            const regDataJson = await regRes.json();
-            const regs = regDataJson.data?.data || [];
-            waitingVerification = regs.filter((r: any) => r.status === "draft").length; 
-          }
-        } catch (e) {
-          console.error("Failed to fetch registrations", e);
-        }
-
-        // 3. Fetch Schedules using MatchCard schema
-        let mappedMatches: any[] = [];
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          const scheduleRes = await fetch(`${apiUrl}/matches?date=${today}`, { headers });
-          if (scheduleRes.ok) {
-            const resJson = await scheduleRes.json();
-            const schedules = resJson.data || [];
-            mappedMatches = schedules.map((sch: any) => {
-              return {
-                id: sch.id,
-                sport: sch.sport?.name || "Cabang Olahraga",
-                round: sch.round_name || "Round",
-                status: sch.status,
-                date: sch.match_date,
-                time: sch.match_time,
-                location: sch.location,
-                teamA: {
-                  name: sch.team_a?.contingent_name || "TBD",
-                  score: sch.score_a,
-                  logoUrl: sch.team_a?.image_url,
-                  cloudinaryId: sch.team_a?.cloudinary_public_id,
-                },
-                teamB: {
-                  name: sch.team_b?.contingent_name || "TBD",
-                  score: sch.score_b,
-                  logoUrl: sch.team_b?.image_url,
-                  cloudinaryId: sch.team_b?.cloudinary_public_id,
-                }
-              };
-            });
-          }
-        } catch (e) {
-          console.error("Failed to fetch matches", e);
-        }
-
-        setStats({
-          totalKontingen: contingentsList.length,
-          timMenunggu: waitingVerification,
-          pertandinganHariIni: mappedMatches.length,
-          redFlags: totalRedFlags
-        });
-        setContingents(contingentsList);
-        setMatches(mappedMatches);
-
-      } catch (error) {
-        console.error("Error in fetchDashboardData:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  const quickStatsData = [
-    { 
-      label: "Total Kontingen", 
-      value: stats.totalKontingen.toString(), 
-      subtext: "Fakultas / Unit", 
-      icon: Building2, 
-      bgColor: "bg-blue-50", 
-      textColor: "text-blue-600",
-      border: "border-gray-100" 
-    },
-    { 
-      label: "Tim Menunggu Verifikasi", 
-      value: stats.timMenunggu.toString(), 
-      subtext: "Perlu ditinjau", 
-      icon: Clock, 
-      bgColor: "bg-orange-50", 
-      textColor: "text-orange-600",
-      border: "border-orange-200 ring-1 ring-orange-100 shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
-    },
-    { 
-      label: "Pertandingan Hari Ini", 
-      value: stats.pertandinganHariIni.toString(), 
-      subtext: "Jadwal aktif", 
-      icon: Swords, 
-      bgColor: "bg-emerald-50", 
-      textColor: "text-emerald-600",
-      border: "border-gray-100" 
-    },
-    { 
-      label: "Peringatan Medis", 
-      value: stats.redFlags.toString(), 
-      subtext: "High Risk", 
-      icon: AlertTriangle, 
-      bgColor: "bg-red-50", 
-      textColor: "text-red-600",
-      border: "border-red-200 ring-1 ring-red-100 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
-    },
-  ];
+  const { stats, matches, contingents, isLoading } = usePanitiaDashboard();
 
   if (isLoading) {
     return (
@@ -193,11 +70,11 @@ export default function AdminDashboardOverview() {
 
       {/* A. Quick Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickStatsData.map((stat, idx) => (
-          <div key={idx} className={`bg-white rounded-xl p-5 border ${stat.border} flex items-start justify-between`}>
+        {QUICK_STATS_CONFIG.map((stat) => (
+          <div key={stat.key} className={`bg-white rounded-xl p-5 border ${stat.border} flex items-start justify-between`}>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">{stat.label}</p>
-              <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+              <h3 className="text-3xl font-bold text-gray-900 mb-1">{stats[stat.key]}</h3>
               <p className="text-xs text-gray-400">{stat.subtext}</p>
             </div>
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${stat.bgColor} ${stat.textColor}`}>

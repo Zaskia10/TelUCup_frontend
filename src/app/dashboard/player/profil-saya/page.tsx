@@ -160,7 +160,7 @@ export default function PlayerProfilSayaPage() {
     try {
       const result = await getMyLatestAssessment();
       if (result.data) {
-        setAssessment(result.data);
+        setAssessment(result.data as any);
         setHasNoAssessment(false);
       } else {
         setHasNoAssessment(true);

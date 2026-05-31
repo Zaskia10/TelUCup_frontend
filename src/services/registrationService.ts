@@ -1,30 +1,11 @@
-import { Registration } from "@/types/bracket";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-const getHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
+import { apiClient } from "@/lib/apiClient";
 
 export const getMyRegistrations = async () => {
-  const response = await fetch(`${API_URL}/registrations/my`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) throw new Error("Gagal mengambil data pendaftaran");
-  return response.json();
+  return apiClient.get<{ data: unknown[] }>("/registrations/my");
 };
 
 export const getRegistrationDetail = async (id: number) => {
-  const response = await fetch(`${API_URL}/registrations/${id}`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) throw new Error("Gagal mengambil detail pendaftaran");
-  return response.json();
+  return apiClient.get(`/registrations/${id}`);
 };
 
 export const createRegistration = async (data: {
@@ -32,52 +13,17 @@ export const createRegistration = async (data: {
   sport_category_id?: number | null;
   player_ids?: number[];
 }) => {
-  const response = await fetch(`${API_URL}/registrations`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  });
-  const resData = await response.json();
-  if (!response.ok) throw new Error(resData.message || "Gagal membuat draf pendaftaran");
-  return resData;
+  return apiClient.post("/registrations", data);
 };
 
 export const addPlayersToRegistration = async (id: number, playerIds: number[]) => {
-  const response = await fetch(`${API_URL}/registrations/${id}/players`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ player_ids: playerIds }),
-  });
-  const resData = await response.json();
-  if (!response.ok) throw new Error(resData.message || "Gagal menambahkan pemain");
-  return resData;
+  return apiClient.post(`/registrations/${id}/players`, { player_ids: playerIds });
 };
 
 export const removePlayerFromRegistration = async (id: number, playerId: number) => {
-  const response = await fetch(`${API_URL}/registrations/${id}/players/${playerId}`, {
-    method: "DELETE",
-    headers: getHeaders(),
-  });
-  const resData = await response.json();
-  if (!response.ok) throw new Error(resData.message || "Gagal menghapus pemain");
-  return resData;
+  return apiClient.del(`/registrations/${id}/players/${playerId}`);
 };
 
 export const submitRegistration = async (id: number) => {
-  const response = await fetch(`${API_URL}/registrations/${id}/submit`, {
-    method: "POST",
-    headers: getHeaders(),
-  });
-  const resData = await response.json();
-  if (!response.ok) throw new Error(resData.message || "Gagal mengajukan pendaftaran");
-  return resData;
-};
-
-// Assuming there's an endpoint to get contingent members to add to the team
-export const getMyContingentPlayers = async () => {
-  const response = await fetch(`${API_URL}/contingents/my/players`, { // Assuming this is the endpoint
-    headers: getHeaders(),
-  });
-  if (!response.ok) throw new Error("Gagal mengambil daftar pemain kontingen");
-  return response.json();
+  return apiClient.post(`/registrations/${id}/submit`);
 };

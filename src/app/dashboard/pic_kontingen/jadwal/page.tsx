@@ -43,8 +43,8 @@ export default function PICKontingenJadwalPage() {
     try {
       const res = await getSports();
       setSports(res.data);
-    } catch (error) {
-      console.error("Gagal memuat cabang olahraga", error);
+    } catch {
+      // Non-critical
     }
   };
 
@@ -52,30 +52,36 @@ export default function PICKontingenJadwalPage() {
     setIsLoadingMatches(true);
     try {
       const res = await getMyMatches();
-      const matchesData = res.data || [];
-      setAllMatches(matchesData.map((m: any) => ({
-        id: m.id,
-        sport: "Cabang Olahraga", // Placeholder, since sport_id is numeric. Could map from sports array if available.
-        round: m.round_name || "Round",
-        status: m.status,
-        date: m.match_date,
-        time: m.match_time,
-        location: m.location,
-        teamA: {
-          name: m.team_a?.contingent?.name || "TBD",
-          score: m.score_a,
-          logoUrl: m.team_a?.contingent?.image_url,
-          cloudinaryId: m.team_a?.contingent?.cloudinary_public_id,
-        },
-        teamB: {
-          name: m.team_b?.contingent?.name || "TBD",
-          score: m.score_b,
-          logoUrl: m.team_b?.contingent?.image_url,
-          cloudinaryId: m.team_b?.contingent?.cloudinary_public_id,
-        }
-      })));
-    } catch (error) {
-      console.error("Gagal memuat pertandingan", error);
+      const matchesData = (res.data || []) as Array<Record<string, unknown>>;
+      setAllMatches(matchesData.map((m) => {
+        const teamA = m.team_a as Record<string, unknown> | null;
+        const teamB = m.team_b as Record<string, unknown> | null;
+        const contA = (teamA?.contingent ?? {}) as Record<string, unknown>;
+        const contB = (teamB?.contingent ?? {}) as Record<string, unknown>;
+        return {
+          id: m.id as number,
+          sport: "Cabang Olahraga",
+          round: (m.round_name as string) || "Round",
+          status: m.status as string,
+          date: m.match_date as string | null,
+          time: m.match_time as string | null,
+          location: m.location as string | null,
+          teamA: {
+            name: (contA.name as string) || "TBD",
+            score: m.score_a as number | null,
+            logoUrl: contA.image_url as string | null,
+            cloudinaryId: contA.cloudinary_public_id as string | null,
+          },
+          teamB: {
+            name: (contB.name as string) || "TBD",
+            score: m.score_b as number | null,
+            logoUrl: contB.image_url as string | null,
+            cloudinaryId: contB.cloudinary_public_id as string | null,
+          },
+        };
+      }));
+    } catch {
+      // Non-critical
     } finally {
       setIsLoadingMatches(false);
     }
@@ -88,7 +94,7 @@ export default function PICKontingenJadwalPage() {
       const res = await getBracket(selectedSport.id, selectedCategory?.id);
       
       // Inject dummy "Perebutan Juara 3" match to the frontend if not returned by backend
-      const bracket: BracketData = res.data;
+      const bracket = res.data as BracketData;
       if (bracket && bracket.rounds && bracket.rounds.length > 0) {
         const lastRound = bracket.rounds[bracket.rounds.length - 1];
         if (!lastRound.matches.some((m) => m.isThirdPlace)) {
@@ -135,7 +141,7 @@ export default function PICKontingenJadwalPage() {
       }
       
       setBracketData(bracket);
-    } catch (error: any) {
+    } catch {
       setBracketData(null);
     } finally {
       setIsLoading(false);

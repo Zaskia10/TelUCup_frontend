@@ -100,6 +100,7 @@ export default function SelfAssessmentPage() {
   const [error, setError] = useState("");
   const [data, setData] = useState<QuestionnaireData | null>(null);
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,9 +112,10 @@ export default function SelfAssessmentPage() {
       try {
         setLoading(true);
         const res = await getQuestionnaire();
-        setData(res.data || res);
-      } catch (err: any) {
-        setError(err.message || "Gagal memuat pertanyaan self-assessment");
+        setData((res.data || res) as unknown as QuestionnaireData);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Gagal memuat pertanyaan self-assessment";
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -121,6 +123,7 @@ export default function SelfAssessmentPage() {
     fetchQ();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (code: string, value: any) => {
     setAnswers(prev => ({ ...prev, [code]: value }));
   };
@@ -143,11 +146,12 @@ export default function SelfAssessmentPage() {
     try {
       setIsSubmitting(true);
       const payload = { player_id: null, answers };
-      const result = await submitSelfAssessment(payload);
+      const result = await submitSelfAssessment(payload) as unknown as { data?: { id: number } };
       setAssessmentId(result.data?.id ?? null);
       setShowAnnouncementModal(true);
-    } catch (err: any) {
-      setSubmitError(err.message || "Terjadi kesalahan saat mengirim self-assessment");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim self-assessment";
+      setSubmitError(message);
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } finally {
       setIsSubmitting(false);

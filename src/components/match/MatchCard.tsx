@@ -15,9 +15,9 @@ export interface MatchCardProps {
     sport: string;
     round: string;
     status: string;
-    date: string;
-    time: string;
-    location?: string;
+    date: string | null;
+    time: string | null;
+    location?: string | null;
     teamA: MatchTeam;
     teamB: MatchTeam;
   };
@@ -53,10 +53,11 @@ export default function MatchCard({ match }: MatchCardProps) {
   };
 
   // Helper to format date if it's an ISO string
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "TBD";
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString; // return original if not valid date
+      if (isNaN(date.getTime())) return dateString;
       return date.toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'short',

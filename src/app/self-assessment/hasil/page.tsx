@@ -220,7 +220,8 @@ export default function HasilAssessmentPage() {
         const params = new URLSearchParams(window.location.search);
         const idParam = params.get("id");
 
-        let result;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let result: any;
         if (idParam && !isNaN(Number(idParam))) {
           result = await getAssessmentById(Number(idParam));
         } else {
@@ -232,8 +233,9 @@ export default function HasilAssessmentPage() {
         } else {
           setData(result.data);
         }
-      } catch (err: any) {
-        setError(err.message || "Gagal memuat hasil assessment");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Gagal memuat hasil assessment";
+        setError(message);
       } finally {
         setLoading(false);
       }

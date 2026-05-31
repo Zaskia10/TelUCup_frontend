@@ -25,6 +25,7 @@ export default function PlayerDetailPage() {
   const router = useRouter();
   const playerId = params.id as string;
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [player, setPlayer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +36,9 @@ export default function PlayerDetailPage() {
       try {
         const res = await getPlayerDetail(playerId);
         setPlayer(res.data);
-      } catch (err: any) {
-        setError(err.message || "Terjadi kesalahan saat memuat data pemain");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Terjadi kesalahan saat memuat data pemain";
+        setError(message);
       } finally {
         setIsLoading(false);
       }

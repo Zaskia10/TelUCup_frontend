@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { apiClient } from "@/lib/apiClient";
+import { getDashboardPathForRole, type User } from "@/lib/auth";
+
+interface LoginResponse {
+  token: string;
+  user: User;
+}
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -18,40 +25,17 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: username, // Mapping username field to email for API
-          password: password,
-        }),
+      const data = await apiClient.post<LoginResponse>("/login", {
+        email: username,
+        password: password,
       });
 
-      const data = await res.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (res.ok) {
-        // Save token and user info
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Check role and redirect
-        const role = data.user?.role;
-        if (role === "player") {
-          router.push("/dashboard/player");
-        } else if (role === "panitia" || role === "admin") {
-          router.push("/dashboard/panitia");
-        } else if (role === "pic_kontingen" || role === "pic") {
-          router.push("/dashboard/pic_kontingen");
-        } else {
-          router.push("/"); // Fallback
-        }
-      } else {
-        setErrorMsg(data.message || "Login failed");
-      }
-    } catch (err) {
-      setErrorMsg("Something went wrong. Please try again.");
+      router.push(getDashboardPathForRole(data.user.role));
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Login gagal. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +62,7 @@ export default function LoginPage() {
                 {errorMsg}
               </div>
             )}
-            
+
             <div className="mb-5">
               <label className="block text-[13px] text-[#95a5a6] mb-1.5">
                 Username
