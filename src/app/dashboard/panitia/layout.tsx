@@ -11,6 +11,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import DashboardShell, { type MenuItem } from "@/components/layout/DashboardShell";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const menuItems: MenuItem[] = [
   { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard/panitia" },
@@ -28,6 +30,24 @@ export default function PanitiaDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      router.push("/login");
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role !== "panitia") {
+        router.push("/login"); // or redirect to their own dashboard
+      }
+    } catch (e) {
+      router.push("/login");
+    }
+  }, [router]);
+
   return (
     <DashboardShell
       menuItems={menuItems}

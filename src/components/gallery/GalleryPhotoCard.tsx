@@ -1,5 +1,5 @@
 import { EventPhoto } from "@/types/gallery";
-import { Eye, Move, Trash2, AlertCircle } from "lucide-react";
+import { Eye, Move, Trash2, Download } from "lucide-react";
 import Image from "next/image";
 
 interface Props {
@@ -34,20 +34,12 @@ export function GalleryPhotoCard({ photo, onPreview, onMove, onDelete, isViewer 
           <span className="bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded">
             Photo
           </span>
-          {isToday && (
-            <span className="bg-indigo-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-              <AlertCircle size={10} /> Diproses AI
-            </span>
-          )}
         </div>
       </div>
 
       <div className="p-3">
         <div className="mb-3">
           <p className="text-[12px] font-semibold text-gray-800">{formatDate(photo.created_at)}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5 truncate">
-            Uploader: {photo.uploader ? photo.uploader.name : `ID ${photo.uploaded_by}`}
-          </p>
         </div>
 
         <div className="flex gap-2 border-t border-gray-100 pt-2">
@@ -57,6 +49,17 @@ export function GalleryPhotoCard({ photo, onPreview, onMove, onDelete, isViewer 
           >
             <Eye size={14} /> Preview
           </button>
+
+          <a 
+            href={photo.image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className="flex-none flex items-center justify-center p-1.5 bg-white hover:bg-green-50 text-gray-400 hover:text-green-600 border border-transparent hover:border-green-100 rounded-md transition-colors"
+            title="Download"
+          >
+            <Download size={14} />
+          </a>
           
           {!isViewer && (
             <>
