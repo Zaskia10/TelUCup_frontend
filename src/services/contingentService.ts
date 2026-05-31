@@ -14,22 +14,12 @@ export const removeContingentPlayer = async (playerId: number) => {
 
 export const addContingentPlayer = async (data: {
   name: string;
-  nim_nip: string;
   email: string;
-  employee_status: string;
+  password?: string;
 }) => {
-  const createPlayerRes = await apiClient.post<{ player?: { id: number } }>("/players", {
+  return apiClient.post("/contingents/my/players/register", {
     name: data.name,
     email: data.email,
-    password: "rahasia123",
-    nim_nip: data.nim_nip,
-    employee_status: data.employee_status,
+    password: data.password || "1301234567",
   });
-
-  const newPlayerId = createPlayerRes.player?.id;
-  if (!newPlayerId) {
-    throw new Error("Gagal mendapatkan ID pemain yang baru dibuat");
-  }
-
-  return apiClient.post("/contingents/my/players", { player_id: newPlayerId });
 };

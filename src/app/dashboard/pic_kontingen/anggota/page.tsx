@@ -28,7 +28,7 @@ export default function AnggotaKontingenPage() {
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newMember, setNewMember] = useState({ name: "", nim: "", email: "", status: "Mahasiswa" });
+  const [newMember, setNewMember] = useState({ name: "", email: "", password: "" });
 
   const fetchMembers = async () => {
     setIsLoading(true);
@@ -62,12 +62,11 @@ export default function AnggotaKontingenPage() {
     try {
       await addContingentPlayer({
         name: newMember.name,
-        nim_nip: newMember.nim,
         email: newMember.email,
-        employee_status: newMember.status,
+        password: newMember.password,
       });
       setIsAddModalOpen(false);
-      setNewMember({ name: "", nim: "", email: "", status: "Mahasiswa" });
+      setNewMember({ name: "", email: "", password: "" });
       await fetchMembers();
     } catch (error: any) {
       alert(error.message || "Gagal menambahkan anggota");
@@ -309,19 +308,6 @@ export default function AnggotaKontingenPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NIM / NIP <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      type="text" 
-                      required
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
-                      value={newMember.nim}
-                      onChange={(e) => setNewMember({...newMember, nim: e.target.value})}
-                      placeholder="Masukkan NIM atau NIP"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email SSO <span className="text-red-500">*</span>
                     </label>
                     <input 
@@ -335,18 +321,16 @@ export default function AnggotaKontingenPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status Kepegawaian <span className="text-red-500">*</span>
+                      Password <span className="text-red-500">*</span>
                     </label>
-                    <select 
+                    <input 
+                      type="password" 
                       required
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
-                      value={newMember.status}
-                      onChange={(e) => setNewMember({...newMember, status: e.target.value})}
-                    >
-                      <option value="Mahasiswa">Mahasiswa</option>
-                      <option value="Dosen">Dosen</option>
-                      <option value="Karyawan">Karyawan</option>
-                    </select>
+                      value={newMember.password}
+                      onChange={(e) => setNewMember({...newMember, password: e.target.value})}
+                      placeholder="Masukkan password"
+                    />
                   </div>
                 </div>
                 
