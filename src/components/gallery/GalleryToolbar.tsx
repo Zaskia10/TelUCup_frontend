@@ -9,6 +9,7 @@ interface Props {
   onUploadClick: () => void;
   onCreateFolderClick: () => void;
   isLoading: boolean;
+  isViewer?: boolean;
 }
 
 export function GalleryToolbar({
@@ -19,7 +20,8 @@ export function GalleryToolbar({
   onRefresh,
   onUploadClick,
   onCreateFolderClick,
-  isLoading
+  isLoading,
+  isViewer = false,
 }: Props) {
   return (
     <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -57,21 +59,25 @@ export function GalleryToolbar({
           <RefreshCw size={18} className={isLoading ? "animate-spin text-gray-400" : ""} />
         </button>
 
-        <button 
-          onClick={onCreateFolderClick}
-          className="px-3 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <FolderPlus size={16} />
-          <span className="hidden sm:inline">Buat Folder</span>
-        </button>
+        {!isViewer && (
+          <>
+            <button 
+              onClick={onCreateFolderClick}
+              className="px-3 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <FolderPlus size={16} />
+              <span className="hidden sm:inline">Buat Folder</span>
+            </button>
 
-        <button 
-          onClick={onUploadClick}
-          className="px-3 py-2 bg-[#a81d22] hover:bg-[#8b1518] text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <Upload size={16} />
-          <span className="hidden sm:inline">Upload Foto</span>
-        </button>
+            <button 
+              onClick={onUploadClick}
+              className="px-3 py-2 bg-[#a81d22] hover:bg-[#8b1518] text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Upload size={16} />
+              <span className="hidden sm:inline">Upload Foto</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

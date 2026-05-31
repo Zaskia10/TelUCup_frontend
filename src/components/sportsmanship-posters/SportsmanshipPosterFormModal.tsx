@@ -28,22 +28,23 @@ export default function SportsmanshipPosterFormModal({
 
   useEffect(() => {
     if (isOpen) {
-      if (poster) {
-        setTitle(poster.title);
-        setDescription(poster.description || "");
-        setIsActive(poster.is_active);
-        setSortOrder(poster.sort_order);
-        setImagePreview(poster.image_url);
+      setTimeout(() => {
+        if (poster) {
+          setTitle(poster.title);
+          setDescription(poster.description || "");
+          setIsActive(poster.is_active);
+          setSortOrder(poster.sort_order);
+          setImagePreview(poster.image_url);
+        } else {
+          setTitle("");
+          setDescription("");
+          setIsActive(true);
+          setSortOrder(0);
+          setImagePreview(null);
+        }
         setImageFile(null);
-      } else {
-        setTitle("");
-        setDescription("");
-        setIsActive(true);
-        setSortOrder(0);
-        setImageFile(null);
-        setImagePreview(null);
-      }
-      setError("");
+        setError("");
+      }, 0);
     }
   }, [isOpen, poster]);
 

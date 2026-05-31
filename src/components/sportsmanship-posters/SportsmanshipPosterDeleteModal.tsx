@@ -44,9 +44,9 @@ export default function SportsmanshipPosterDeleteModal({
           <AlertTriangle size={28} />
         </div>
         
-        <h3 className="mb-2 text-lg font-bold text-gray-900">Hapus Poster?</h3>
-        <p className="text-sm text-gray-500 mb-6">
-          Apakah Anda yakin ingin menghapus poster <span className="font-bold text-gray-700">"{poster.title}"</span>? Tindakan ini tidak dapat dibatalkan.
+        <h3 className="text-lg font-bold text-gray-800">Hapus Poster?</h3>
+        <p className="text-gray-500 text-sm mt-1">
+          Apakah Anda yakin ingin menghapus poster &quot;{poster?.title}&quot;? Tindakan ini tidak dapat dibatalkan.
         </p>
 
         {error && (

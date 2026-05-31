@@ -7,9 +7,10 @@ interface Props {
   onPreview: (photo: EventPhoto) => void;
   onMove: (photo: EventPhoto) => void;
   onDelete: (photo: EventPhoto) => void;
+  isViewer?: boolean;
 }
 
-export function GalleryPhotoCard({ photo, onPreview, onMove, onDelete }: Props) {
+export function GalleryPhotoCard({ photo, onPreview, onMove, onDelete, isViewer = false }: Props) {
   const isToday = new Date(photo.created_at).toDateString() === new Date().toDateString();
   
   const formatDate = (dateString: string) => {
@@ -56,20 +57,25 @@ export function GalleryPhotoCard({ photo, onPreview, onMove, onDelete }: Props) 
           >
             <Eye size={14} /> Preview
           </button>
-          <button 
-            onClick={() => onMove(photo)}
-            className="flex-none flex items-center justify-center p-1.5 bg-white hover:bg-blue-50 text-gray-400 hover:text-blue-600 border border-transparent hover:border-blue-100 rounded-md transition-colors"
-            title="Pindahkan"
-          >
-            <Move size={14} />
-          </button>
-          <button 
-            onClick={() => onDelete(photo)}
-            className="flex-none flex items-center justify-center p-1.5 bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 border border-transparent hover:border-red-100 rounded-md transition-colors"
-            title="Hapus"
-          >
-            <Trash2 size={14} />
-          </button>
+          
+          {!isViewer && (
+            <>
+              <button 
+                onClick={() => onMove(photo)}
+                className="flex-none flex items-center justify-center p-1.5 bg-white hover:bg-blue-50 text-gray-400 hover:text-blue-600 border border-transparent hover:border-blue-100 rounded-md transition-colors"
+                title="Pindahkan"
+              >
+                <Move size={14} />
+              </button>
+              <button 
+                onClick={() => onDelete(photo)}
+                className="flex-none flex items-center justify-center p-1.5 bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 border border-transparent hover:border-red-100 rounded-md transition-colors"
+                title="Hapus"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

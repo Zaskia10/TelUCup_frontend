@@ -17,7 +17,7 @@ const menuItems: MenuItem[] = [
   { name: "Anggota Kontingen", icon: Users, href: "/dashboard/pic_kontingen/anggota" },
   { name: "Registrasi Tim", icon: FileText, href: "/dashboard/pic_kontingen/registrasi" },
   { name: "Jadwal & Pertandingan", icon: Trophy, href: "/dashboard/pic_kontingen/jadwal" },
-  { name: "Galeri Saya", icon: Camera, href: "/dashboard/pic_kontingen/galeri" },
+  { name: "Dokumentasi Event", icon: Camera, href: "/dashboard/pic_kontingen/dokumentasi" },
   { name: "Self Assessment", icon: ClipboardList, href: "/self-assessment" },
   { name: "Profil Saya", icon: UserCircle, href: "/dashboard/pic_kontingen/profil-saya" },
   { name: "Profil Kontingen", icon: Building2, href: "/dashboard/pic_kontingen/profil-kontingen" },

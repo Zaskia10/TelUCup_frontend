@@ -20,7 +20,7 @@ export default function SportsmanshipReminderModal({
   // Reset to first slide when modal opens
   useEffect(() => {
     if (isOpen) {
-      setCurrentIndex(0);
+      setTimeout(() => setCurrentIndex(0), 0);
     }
   }, [isOpen]);
 

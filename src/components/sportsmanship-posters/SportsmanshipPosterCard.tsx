@@ -1,5 +1,5 @@
 import type { SportsmanshipPoster } from "@/types/sportsmanshipPoster";
-import { Edit2, Trash2, Eye, GripVertical } from "lucide-react";
+import { Edit2, Trash2, Eye } from "lucide-react";
 
 interface Props {
   poster: SportsmanshipPoster;

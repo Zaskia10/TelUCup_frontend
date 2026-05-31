@@ -14,7 +14,11 @@ import { GalleryPhotoPreviewModal } from "./GalleryPhotoPreviewModal";
 import { GalleryMovePhotoModal } from "./GalleryMovePhotoModal";
 import { EventPhoto, GalleryFolder, GalleryFolderPayload } from "@/types/gallery";
 
-export function GalleryManager() {
+interface Props {
+  isViewer?: boolean;
+}
+
+export function GalleryManager({ isViewer = false }: Props) {
   const {
     currentFolderId,
     folders,
@@ -200,6 +204,7 @@ export function GalleryManager() {
         }}
         onUploadClick={() => setIsUploadModalOpen(true)}
         isLoading={isLoading}
+        isViewer={isViewer}
       />
 
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm min-h-[50vh]">
@@ -222,10 +227,10 @@ export function GalleryManager() {
               <GalleryFolderGrid 
                 title={currentFolderId === null ? "Folder Utama" : "Subfolder"}
                 isEmpty={folders.length === 0}
-                onEmptyAction={() => {
+                onEmptyAction={!isViewer ? () => {
                   setFolderToEdit(null);
                   setIsFolderModalOpen(true);
-                }}
+                } : undefined}
               >
                 {filteredFolders.map(folder => (
                   <GalleryFolderCard 
@@ -234,6 +239,7 @@ export function GalleryManager() {
                     onClick={openFolder}
                     onRename={(f) => { setFolderToEdit(f); setIsFolderModalOpen(true); }}
                     onDelete={(f) => setFolderToDelete(f)}
+                    isViewer={isViewer}
                   />
                 ))}
               </GalleryFolderGrid>
@@ -244,7 +250,7 @@ export function GalleryManager() {
               <GalleryPhotoGrid 
                 title="Dokumentasi Foto"
                 isEmpty={photos.length === 0}
-                onEmptyAction={() => setIsUploadModalOpen(true)}
+                onEmptyAction={!isViewer ? () => setIsUploadModalOpen(true) : undefined}
               >
                 {filteredPhotos.map(photo => (
                   <GalleryPhotoCard 
@@ -253,6 +259,7 @@ export function GalleryManager() {
                     onPreview={setPhotoToPreview}
                     onMove={setPhotoToMove}
                     onDelete={setPhotoToDelete}
+                    isViewer={isViewer}
                   />
                 ))}
               </GalleryPhotoGrid>

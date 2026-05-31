@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { SportsmanshipPoster, SportsmanshipPosterReorderItem } from "@/types/sportsmanshipPoster";
 import { ArrowUp, ArrowDown, Save, X, Loader2 } from "lucide-react";
 
