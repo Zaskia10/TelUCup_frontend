@@ -37,6 +37,7 @@ interface Player {
   checked_in: boolean;
   checked_in_at: string | null;
   risk_color?: "high" | "medium" | "low" | "grey";
+  risk_lvl?: string;
 }
 
 interface Team {
@@ -166,7 +167,7 @@ export default function VerifikasiContent() {
   const totalPlayers = allPlayers.length;
   const checkedInCount = allPlayers.filter((p) => p.checked_in).length;
   const notCheckedInCount = totalPlayers - checkedInCount;
-  const highRiskCount = allPlayers.filter((p) => p.risk_color === "high").length;
+  const highRiskCount = allPlayers.filter((p) => p.risk_lvl?.toLowerCase() === "high").length;
   const allCheckedIn = totalPlayers > 0 && checkedInCount === totalPlayers;
 
   const currentStep = matchData
@@ -562,8 +563,7 @@ export default function VerifikasiContent() {
                       <th className="px-4 py-3 text-left">Nama Pemain</th>
                       <th className="px-4 py-3 text-left">NIM</th>
                       <th className="px-4 py-3 text-left">Check-in</th>
-                      <th className="px-4 py-3 text-left">Kelayakan</th>
-                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Status Risiko</th>
                       <th className="px-4 py-3 text-left">Aksi</th>
                     </tr>
                   </thead>
@@ -571,7 +571,7 @@ export default function VerifikasiContent() {
                     {activeTeam?.players.length ? (
                       activeTeam.players.map((player, idx) => {
                         const isLoading = loadingPlayers.has(player.id);
-                        const isHighRisk = player.risk_color === "high";
+                        const isHighRisk = player.risk_lvl?.toLowerCase() === "high";
                         return (
                           <tr key={player.id}
                             className={`transition hover:bg-gray-50/60 ${player.checked_in ? "bg-green-50/40" : ""}`}>
@@ -621,26 +621,25 @@ export default function VerifikasiContent() {
                               )}
                             </td>
 
-                            {/* Kelayakan */}
+                            {/* Status Risiko */}
                             <td className="px-4 py-3.5">
                               {isHighRisk ? (
-                                <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-black text-red-700">
-                                  HIGH RISK <AlertTriangle className="h-3 w-3" />
+                                <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-black text-red-700 w-max">
+                                  {player.risk_lvl?.toUpperCase() || "HIGH RISK"} <AlertTriangle className="h-3 w-3" />
                                 </span>
-                              ) : player.risk_color === "medium" ? (
-                                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black text-amber-700">MEDIUM</span>
-                              ) : player.risk_color === "grey" ? (
-                                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black text-gray-500">-</span>
+                              ) : player.risk_lvl?.toLowerCase() === "medium" ? (
+                                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black text-amber-700 w-max">
+                                  {player.risk_lvl.toUpperCase()}
+                                </span>
+                              ) : !player.risk_lvl || player.risk_lvl?.toLowerCase() === "low" ? (
+                                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-black text-green-700 w-max">
+                                  {player.risk_lvl?.toUpperCase() || "LAYAK"}
+                                </span>
                               ) : (
-                                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-black text-green-700">LAYAK</span>
+                                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black text-gray-500 w-max">
+                                  {player.risk_lvl.toUpperCase()}
+                                </span>
                               )}
-                            </td>
-
-                            {/* Status */}
-                            <td className="px-4 py-3.5">
-                              <span className={`text-xs font-bold ${player.checked_in ? "text-green-600" : "text-gray-400"}`}>
-                                {player.checked_in ? "CLEARED" : "PENDING"}
-                              </span>
                             </td>
 
                             {/* Aksi */}
@@ -667,7 +666,7 @@ export default function VerifikasiContent() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">
+                        <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
                           Tim ini belum memiliki pemain terdaftar.
                         </td>
                       </tr>
