@@ -14,7 +14,7 @@ export default function MatchDetailModal({
   sportName,
   onClose,
 }: MatchDetailModalProps) {
-  // Lock body scroll
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -45,17 +45,17 @@ export default function MatchDetailModal({
   const winner = match.winner;
 
   return (
-    /* Backdrop */
+    
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
       onClick={onClose}
     >
-      {/* Modal Panel */}
+      
       <div
         className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header ── */}
+        
         <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-black text-gray-900">
@@ -84,12 +84,12 @@ export default function MatchDetailModal({
           </div>
         </div>
 
-        {/* ── Scrollable body ── */}
+        
         <div className="overflow-y-auto flex-1">
 
-          {/* Score banner */}
+          
           <div className="flex items-center justify-between gap-2 px-6 py-5 bg-gradient-to-br from-[#b6252a]/5 via-white to-gray-50 border-b border-gray-100">
-            {/* Team A */}
+            
             <div className="flex flex-col items-center flex-1 min-w-0 gap-1">
               <div className="w-14 h-14 rounded-full bg-white border-2 border-gray-100 shadow flex items-center justify-center text-xl font-black text-[#b6252a] flex-shrink-0">
                 {teamA ? teamA.contingent.name.charAt(0) : "?"}
@@ -109,7 +109,7 @@ export default function MatchDetailModal({
               )}
             </div>
 
-            {/* Score */}
+            
             <div className="flex flex-col items-center gap-1 px-2">
               {match.status !== "scheduled" ? (
                 <div className="flex items-center gap-3">
@@ -152,7 +152,7 @@ export default function MatchDetailModal({
               )}
             </div>
 
-            {/* Team B */}
+            
             <div className="flex flex-col items-center flex-1 min-w-0 gap-1">
               <div className="w-14 h-14 rounded-full bg-white border-2 border-gray-100 shadow flex items-center justify-center text-xl font-black text-[#b6252a] flex-shrink-0">
                 {teamB ? teamB.contingent.name.charAt(0) : "?"}
@@ -173,10 +173,10 @@ export default function MatchDetailModal({
             </div>
           </div>
 
-          {/* Info & Players grid */}
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 sm:gap-px sm:bg-gray-100">
 
-            {/* ── Informasi Umum ── */}
+            
             <div className="p-5 bg-white">
               <h3 className="text-[11px] font-black text-[#b6252a] uppercase tracking-wider border-l-[3px] border-[#b6252a] pl-2.5 mb-4">
                 Informasi Umum
@@ -240,7 +240,7 @@ export default function MatchDetailModal({
               </div>
             </div>
 
-            {/* ── Daftar Pemain ── */}
+            
             <div className="p-5 bg-white border-t sm:border-t-0 border-gray-100">
               <h3 className="text-[11px] font-black text-[#b6252a] uppercase tracking-wider border-l-[3px] border-[#b6252a] pl-2.5 mb-4">
                 Daftar Pemain
@@ -250,7 +250,7 @@ export default function MatchDetailModal({
                 <p className="text-xs text-gray-400 text-center py-6">Data pemain tidak tersedia</p>
               ) : (
                 <div className="space-y-4">
-                  {/* Team A players */}
+                  
                   {playersA.length > 0 && (
                     <div>
                       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -274,7 +274,7 @@ export default function MatchDetailModal({
                     </div>
                   )}
 
-                  {/* Team B players */}
+                  
                   {playersB.length > 0 && (
                     <div>
                       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -303,7 +303,7 @@ export default function MatchDetailModal({
           </div>
         </div>
 
-        {/* Footer */}
+        
         <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
           <button
             onClick={onClose}

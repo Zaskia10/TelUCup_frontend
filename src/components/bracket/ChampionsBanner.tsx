@@ -10,7 +10,7 @@ export default function ChampionsBanner({ bracketData }: { bracketData: BracketD
   const thirdPlace = lastRound?.matches?.find((m) => m.isThirdPlace)
     ?? bracketData.third_place_match;
 
-  // Only show if grand final is finished
+
   if (!grandFinal || grandFinal.status !== "finished" || !grandFinal.winner) {
     return null;
   }

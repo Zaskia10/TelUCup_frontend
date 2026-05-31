@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { Sport, SportCategory } from "@/types/bracket";
 
 interface BracketFilterProps {
@@ -24,7 +23,7 @@ export default function BracketFilter({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
         
-        {/* Cabang Olahraga */}
+        
         <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             Cabang Olahraga
@@ -52,7 +51,7 @@ export default function BracketFilter({
           </div>
         </div>
 
-        {/* Sub-Kategori */}
+        
         <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             Sub-Kategori
@@ -82,7 +81,7 @@ export default function BracketFilter({
           </div>
         </div>
 
-        {/* Buttons */}
+        
         <div className="md:col-span-6 flex gap-2">
           <button 
             className="flex-1 bg-[#b6252a] hover:bg-[#9a1e22] text-white text-sm font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"

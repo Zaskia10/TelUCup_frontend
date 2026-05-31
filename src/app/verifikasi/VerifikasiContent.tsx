@@ -191,7 +191,7 @@ export default function VerifikasiContent() {
     setMatchData((prev) => {
       if (!prev) return prev;
       const updateTeam = (team?: typeof prev.team_a) => {
-        if (!team) return team;
+        if (!team) return null;
         return {
           ...team,
           players: team.players.map(p => 
@@ -220,7 +220,7 @@ export default function VerifikasiContent() {
       setMatchData((prev) => {
         if (!prev) return prev;
         const updateTeam = (team?: typeof prev.team_a) => {
-          if (!team) return team;
+          if (!team) return null;
           return {
             ...team,
             players: team.players.map(p => 
@@ -254,7 +254,7 @@ export default function VerifikasiContent() {
       if (!prev) return prev;
       const isTeamA = prev.team_a?.registration_id === team.registration_id;
       const updateTeam = (t?: typeof prev.team_a) => {
-        if (!t) return t;
+        if (!t) return null;
         return {
           ...t,
           players: t.players.map(p => ({ ...p, checked_in: true, checked_in_at: p.checked_in_at || new Date().toISOString() }))

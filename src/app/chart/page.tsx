@@ -1,58 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import BracketFilter from "@/components/bracket/BracketFilter";
 import TournamentBracket from "@/components/bracket/TournamentBracket";
 import ChampionsBanner from "@/components/bracket/ChampionsBanner";
-import { getSports, getBracket } from "@/services/bracketService";
-import type { BracketData, Sport, SportCategory } from "@/types/bracket";
+import { useBracketData } from "@/hooks/useBracketData";
 
 export default function BracketPage() {
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<SportCategory | null>(null);
-  const [bracketData, setBracketData] = useState<BracketData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    fetchSports();
-  }, []);
-
-  const fetchSports = async () => {
-    try {
-      const res = await getSports();
-      setSports(res.data);
-    } catch (error) {
-      console.error("Failed to fetch sports", error);
-    }
-  };
-
-  const loadBracket = async () => {
-    if (!selectedSport) return;
-    setIsLoading(true);
-    try {
-      const res = await getBracket(selectedSport.id, selectedCategory?.id);
-      
-      const bracket = res.data;
-      if (bracket && bracket.rounds && bracket.rounds.length > 0 && bracket.third_place_match) {
-        const lastRound = bracket.rounds[bracket.rounds.length - 1];
-        bracket.third_place_match.isThirdPlace = true;
-        lastRound.matches.push(bracket.third_place_match);
-      }
-      setBracketData(bracket);
-    } catch (error) {
-      console.error("Failed to fetch bracket data", error);
-      setBracketData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    sports,
+    selectedSport,
+    setSelectedSport,
+    selectedCategory,
+    setSelectedCategory,
+    bracketData,
+    isLoading,
+    error,
+    loadBracket
+  } = useBracketData();
 
   return (
     <div className="min-h-screen bg-[#fffafa]">
       <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8">
-        
-        {/* Header Title Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-100 shadow-sm text-xs font-bold text-[#b6252a] uppercase tracking-widest mb-4">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,7 +36,6 @@ export default function BracketPage() {
           </p>
         </div>
 
-        {/* Filters */}
         <BracketFilter 
           sports={sports} 
           selectedSport={selectedSport} 
@@ -78,7 +45,6 @@ export default function BracketPage() {
           onSearch={loadBracket}
         />
 
-        {/* Legend */}
         <div className="flex flex-wrap justify-center items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-16">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-500"></span> LIVE MATCH
@@ -98,7 +64,12 @@ export default function BracketPage() {
           </div>
         </div>
 
-        {/* Bracket Container */}
+        {error && (
+          <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-4 text-center mb-8 max-w-2xl mx-auto">
+            <p className="font-semibold">{error}</p>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="text-center text-gray-500 py-20 font-medium">Memuat bagan...</div>
         ) : bracketData ? (
@@ -114,7 +85,6 @@ export default function BracketPage() {
             <p>Silakan pilih cabang olahraga dan klik Cari untuk menampilkan bagan pertandingan.</p>
           </div>
         )}
-
       </main>
     </div>
   );

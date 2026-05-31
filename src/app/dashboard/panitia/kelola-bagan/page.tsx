@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminBracketFilter from "@/components/bracket/AdminBracketFilter";
 import AdminMatchCard from "@/components/bracket/AdminMatchCard";
@@ -15,7 +15,6 @@ import {
   updateMatchScore,
   updateMatchSchedule,
   setMatchTeams,
-  swapMatchTeams,
   setMatchStatus,
   getRegistrations
 } from "@/services/bracketService";
@@ -28,7 +27,7 @@ import type {
 } from "@/types/bracket";
 import "@/components/bracket/bracket.css";
 
-export default function KelolaBaganPage() {
+function KelolaBaganContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialized = useRef(false);
@@ -259,16 +258,6 @@ export default function KelolaBaganPage() {
     }
     setOpenInFinishMode(isFinishMode);
     setEditingMatch(match);
-  };
-
-  const handleSwap = async (matchId: number) => {
-    try {
-      await swapMatchTeams(matchId);
-      await loadBracket();
-      showToast("Posisi tim A dan B berhasil ditukar.", "success");
-    } catch (error) {
-      showToast("Gagal menukar posisi tim", "error");
-    }
   };
 
   const handleStartMatch = async (matchId: number) => {
@@ -712,7 +701,6 @@ export default function KelolaBaganPage() {
           registrations={registrations}
           onClose={() => setEditingMatch(null)}
           onSave={handleSaveMatch}
-          onSwap={handleSwap}
           onStart={handleStartMatch}
           openInFinishMode={openInFinishMode}
         />
@@ -776,5 +764,13 @@ export default function KelolaBaganPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function KelolaBaganPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm font-bold text-gray-400">Memuat bagan...</div>}>
+      <KelolaBaganContent />
+    </Suspense>
   );
 }

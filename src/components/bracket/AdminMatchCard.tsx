@@ -30,7 +30,7 @@ export default function AdminMatchCard({
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
 
-  // Check-in gate: all players from both teams must be checked in before starting
+
   const playersA = match.team_a?.players ?? [];
   const playersB = match.team_b?.players ?? [];
   const hasPlayerData = playersA.length > 0 || playersB.length > 0;
@@ -79,7 +79,7 @@ export default function AdminMatchCard({
         ${match.isThirdPlace ? "third-place-match border-gray-100 hover:border-gray-300 hover:shadow-md" : ""}
       `}
     >
-      {/* Header — click to open modal */}
+      
       <button
         type="button"
         onClick={() => onSelect(match)}
@@ -105,7 +105,7 @@ export default function AdminMatchCard({
               cfg.label
             )}
           </span>
-          {/* Edit icon */}
+          
           <span className="text-gray-300 group-hover:text-[#b6252a] transition-colors">
             <svg
               className="w-3.5 h-3.5"
@@ -124,7 +124,7 @@ export default function AdminMatchCard({
         </div>
       </button>
 
-      {/* Teams */}
+      
       <div className="p-3 pb-1 flex flex-col gap-1 relative">
         <div className="absolute left-6 top-7 bottom-7 w-px bg-gray-100" />
 
@@ -163,9 +163,9 @@ export default function AdminMatchCard({
         />
       </div>
 
-      {/* Footer */}
+      
       <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/30 flex flex-col gap-2 mt-1">
-        {/* Date/Location row */}
+        
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
             {match.match_date ? (
@@ -217,7 +217,7 @@ export default function AdminMatchCard({
           )}
         </div>
 
-        {/* Scheduled Matches Action Buttons (Non-Bye, Both Teams Present) */}
+        
         {isScheduled && !isBye && match.team_a && match.team_b && (
           <div className="flex flex-col gap-1.5 mt-1">
             {allCheckedIn ? (
@@ -251,7 +251,7 @@ export default function AdminMatchCard({
           </div>
         )}
 
-        {/* Selesaikan Pertandingan button — only for live, non-bye */}
+        
         {isLive && !isBye && onFinish && (
           <button
             type="button"
@@ -268,7 +268,7 @@ export default function AdminMatchCard({
           </button>
         )}
 
-        {/* Live indicator bar */}
+        
         {isLive && (
           <div className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-lg py-1.5 text-[11px] font-bold text-red-600">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
@@ -280,9 +280,9 @@ export default function AdminMatchCard({
   );
 }
 
-// ─────────────────────────────────────────────────────
-//  Draggable Team Row
-// ─────────────────────────────────────────────────────
+
+
+
 
 function DraggableTeamRow({
   matchId,
@@ -358,7 +358,7 @@ function DraggableTeamRow({
       if (source.matchId === matchId && source.slot === slot) return;
       onDropTeam(matchId, slot, source.matchId, source.slot);
     } catch {
-      // ignore
+
     }
   };
 
@@ -377,7 +377,7 @@ function DraggableTeamRow({
       }`}
     >
       <div className="flex items-center gap-3">
-        {/* Drag handle */}
+        
         {hasDraggableTeam && (
           <div className="text-gray-300 hover:text-gray-500 transition-colors flex-shrink-0 -mr-1">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">

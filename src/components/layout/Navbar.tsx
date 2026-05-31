@@ -41,7 +41,12 @@ export default function Navbar() {
     };
   }, [isMenuOpen]);
 
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/self-assessment") || pathname?.startsWith("/match")) {
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/self-assessment") ||
+    pathname?.startsWith("/match") ||
+    pathname?.startsWith("/verifikasi")
+  ) {
     return null;
   }
 

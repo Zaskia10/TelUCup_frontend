@@ -37,9 +37,9 @@ export default function AdminBracketFilter({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 mb-6">
-      {/* Top section: Sport + Category selection */}
+      
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        {/* Cabang Olahraga */}
+        
         <div className="md:col-span-5">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             Cabang Olahraga
@@ -81,7 +81,7 @@ export default function AdminBracketFilter({
           </div>
         </div>
 
-        {/* Sub-Kategori */}
+        
         <div className="md:col-span-4">
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             Sub-Kategori
@@ -132,7 +132,7 @@ export default function AdminBracketFilter({
           </div>
         </div>
 
-        {/* Team count info */}
+        
         <div className="md:col-span-3 flex flex-col items-start md:items-center justify-end">
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-4 py-2.5 w-full justify-center">
             <svg
@@ -160,10 +160,10 @@ export default function AdminBracketFilter({
         </div>
       </div>
 
-      {/* Separator */}
+      
       <div className="border-t border-gray-100 my-4" />
 
-      {/* Action Buttons */}
+      
       <div className="flex flex-wrap gap-3 items-center">
         {!hasBracket ? (
           <button
@@ -244,7 +244,7 @@ export default function AdminBracketFilter({
           </>
         )}
 
-        {/* Status message */}
+        
         {!selectedSport && (
           <span className="text-xs text-gray-400 font-medium italic ml-2">
             ← Pilih cabang olahraga terlebih dahulu

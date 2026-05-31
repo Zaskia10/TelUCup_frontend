@@ -9,7 +9,6 @@ interface MatchEditModalProps {
   registrations: Registration[];
   onClose: () => void;
   onSave: (matchId: number, updates: MatchUpdates) => void;
-  onSwap: (matchId: number) => void;
   onStart?: (matchId: number) => void;
   openInFinishMode?: boolean;
 }
@@ -33,13 +32,11 @@ export default function MatchEditModal({
   registrations,
   onClose,
   onSave,
-  onSwap,
   onStart,
   openInFinishMode = false,
 }: MatchEditModalProps) {
   const isBye = match.status === "bye";
-  const isLocked = match.status === "finished";
-  // live is only locked for team changes, not for finishing
+
   const isTeamLocked = isBye || match.status === "live" || match.status === "finished";
   const isScheduled = match.status === "scheduled";
 
@@ -88,7 +85,7 @@ export default function MatchEditModal({
   };
 
   const handleSave = () => {
-    // Validation: if status is finished, winner must be selected
+
     if (status === "finished" && winnerId === null) {
       setScoreError(true);
       return;
@@ -109,13 +106,13 @@ export default function MatchEditModal({
     });
   };
 
-  // Auto-compute winner when score changes
+
   const handleScoreAChange = (val: number) => {
     setScoreA(val);
     setScoreError(false);
     if (val > scoreB && teamAId) setWinnerId(teamAId);
     else if (val < scoreB && teamBId) setWinnerId(teamBId);
-    // Equal score: keep current or leave null
+
   };
 
   const handleScoreBChange = (val: number) => {
@@ -136,15 +133,15 @@ export default function MatchEditModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[560px] max-h-[90vh] flex flex-col animate-[modalIn_0.25s_ease-out]">
-        {/* ── Header ── */}
+        
         <div className="px-6 pt-6 pb-4 flex items-start justify-between border-b border-gray-100">
           <div>
             <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
@@ -165,10 +162,10 @@ export default function MatchEditModal({
           </button>
         </div>
 
-        {/* ── Scrollable content ── */}
+        
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-          {/* Status badge row */}
+          
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-2">
               {(["scheduled", "live", "finished"] as const).map((s) => (
@@ -203,7 +200,7 @@ export default function MatchEditModal({
             </div>
           )}
 
-          {/* ── Tombol Check-in Pemain / Lihat Check-in ── */}
+          
           {!isBye && teamAId && teamBId && (
             <Link
               href={`/verifikasi?match_id=${match.id}`}
@@ -216,7 +213,7 @@ export default function MatchEditModal({
             </Link>
           )}
 
-          {/* ── Tombol Mulai Pertandingan (scheduled only) ── */}
+          
           {isScheduled && !isBye && onStart && teamAId && teamBId && (
             <button
               type="button"
@@ -233,7 +230,7 @@ export default function MatchEditModal({
             </button>
           )}
 
-          {/* Live indicator */}
+          
           {match.status === "live" && (
             <div className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-xl py-2.5 text-sm font-bold text-red-600">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
@@ -241,13 +238,13 @@ export default function MatchEditModal({
             </div>
           )}
 
-          {/* ── Team Slots ── */}
+          
           <div className="space-y-3">
             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               Tim Pertandingan
             </label>
 
-            {/* Team A */}
+            
             <TeamSlot
               label="Tim A"
               slotColor="red"
@@ -258,7 +255,7 @@ export default function MatchEditModal({
               onClear={() => setTeamAId(null)}
             />
 
-            {/* Swap button between teams */}
+            
             {!isBye && !isTeamLocked && (
               <div className="flex justify-center">
                 <button
@@ -275,7 +272,7 @@ export default function MatchEditModal({
               </div>
             )}
 
-            {/* Team B */}
+            
             <TeamSlot
               label="Tim B"
               slotColor="blue"
@@ -287,7 +284,7 @@ export default function MatchEditModal({
             />
           </div>
 
-          {/* ── Score & Winner (only when finished) ── */}
+          
           {status === "finished" && !isBye && (
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-4">
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
@@ -303,7 +300,7 @@ export default function MatchEditModal({
                 </div>
               )}
 
-              {/* Score inputs */}
+              
               <div className="flex items-center justify-center gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[10px] font-bold text-gray-400">
@@ -332,7 +329,7 @@ export default function MatchEditModal({
                 </div>
               </div>
 
-              {/* Winner selector */}
+              
               <div className="flex flex-col items-center gap-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   Pemenang
@@ -378,7 +375,7 @@ export default function MatchEditModal({
             </div>
           )}
 
-          {/* ── Notes ── */}
+          
           <div>
             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
               Catatan
@@ -392,7 +389,7 @@ export default function MatchEditModal({
             />
           </div>
 
-          {/* ── Informasi Umum ── */}
+          
           <div>
             <h4 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
               <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -401,7 +398,7 @@ export default function MatchEditModal({
               Informasi Jadwal
             </h4>
             <div className="space-y-3">
-              {/* Tanggal */}
+              
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,7 +415,7 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-              {/* Waktu */}
+              
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -435,7 +432,7 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-              {/* Wasit */}
+              
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -453,7 +450,7 @@ export default function MatchEditModal({
                   />
                 </div>
               </div>
-              {/* Lokasi */}
+              
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -476,7 +473,7 @@ export default function MatchEditModal({
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        
         <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
           <button
             type="button"
@@ -502,9 +499,9 @@ export default function MatchEditModal({
   );
 }
 
-// ─────────────────────────────────────────────────────
-//  TeamSlot sub-component
-// ─────────────────────────────────────────────────────
+
+
+
 function TeamSlot({
   label,
   slotColor,
@@ -532,7 +529,7 @@ function TeamSlot({
 
   return (
     <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
-      {/* Avatar */}
+      
       <div
         className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black border-2 flex-shrink-0 ${
           selected ? avatarBg : emptyBg
@@ -541,7 +538,7 @@ function TeamSlot({
         {selected ? (selected.contingent.abbreviation ?? selected.contingent.name).charAt(0) : "?"}
       </div>
 
-      {/* Info + dropdown */}
+      
       <div className="flex-1 min-w-0">
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
           {label}
@@ -568,7 +565,7 @@ function TeamSlot({
         )}
       </div>
 
-      {/* Clear button */}
+      
       {!isLocked && selectedId && (
         <button
           type="button"

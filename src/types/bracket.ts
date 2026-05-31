@@ -74,5 +74,5 @@ export interface BracketData {
   total_rounds: number;
   rounds: BracketRound[];
   third_place_match?: BracketMatch | null;
-  results?: any;
+  results?: unknown;
 }

@@ -1,4 +1,8 @@
-/* bracket.css */
+:root {
+  --bracket-connector-color: #374151;
+  --bracket-connector-width: 24px;
+  --bracket-connector-thickness: 2px;
+}
 
 .bracket-container {
   display: flex;
@@ -13,94 +17,72 @@
   position: relative;
 }
 
-/* Base styles for match wrappers to allow line drawing */
 .match-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-/* Horizontal line extending to the right from the card */
 .match-wrapper::after {
   content: '';
   position: absolute;
-  right: -24px; /* Half of gap */
-  width: 24px;
-  height: 2px;
-  background-color: #374151; /* gray-700 */
+  right: calc(var(--bracket-connector-width) * -1);
+  width: var(--bracket-connector-width);
+  height: var(--bracket-connector-thickness);
+  background-color: var(--bracket-connector-color);
   top: 50%;
   transform: translateY(-50%);
   z-index: 0;
 }
 
-/* Remove the right line from the last round (Grand Finals) */
 .bracket-column:last-child .match-wrapper::after {
   display: none;
 }
 
-/* Horizontal line coming in from the left */
 .match-wrapper::before {
   content: '';
   position: absolute;
-  left: -24px;
-  width: 24px;
-  height: 2px;
-  background-color: #374151;
+  left: calc(var(--bracket-connector-width) * -1);
+  width: var(--bracket-connector-width);
+  height: var(--bracket-connector-thickness);
+  background-color: var(--bracket-connector-color);
   top: 50%;
   transform: translateY(-50%);
   z-index: 0;
 }
 
-/* Remove left line from the first round */
 .bracket-column:first-child .match-wrapper::before {
   display: none;
 }
 
-/* Vertical lines connecting the pairs */
-/* We add vertical lines to every ODD match wrapper going DOWN, 
-   and every EVEN match wrapper going UP. 
-   Wait, a better way is to wrap pairs of matches. */
-
-/* Let's use a specialized class for the vertical connector.
-   We can just apply a class like 'connect-down' or 'connect-up' to the match wrapper. */
-
 .connect-down::after {
-  /* Draw horizontal then vertical down */
   content: '';
   position: absolute;
-  right: -24px;
+  right: calc(var(--bracket-connector-width) * -1);
   top: 50%;
-  width: 24px;
+  width: var(--bracket-connector-width);
   height: 50%;
-  border-top: 2px solid #374151;
-  border-right: 2px solid #374151;
+  border-top: var(--bracket-connector-thickness) solid var(--bracket-connector-color);
+  border-right: var(--bracket-connector-thickness) solid var(--bracket-connector-color);
   border-top-right-radius: 4px;
   background: transparent;
   transform: none;
 }
 
 .connect-up::after {
-  /* Draw horizontal then vertical up */
   content: '';
   position: absolute;
-  right: -24px;
+  right: calc(var(--bracket-connector-width) * -1);
   bottom: 50%;
-  width: 24px;
+  width: var(--bracket-connector-width);
   height: 50%;
-  border-bottom: 2px solid #374151;
-  border-right: 2px solid #374151;
+  border-bottom: var(--bracket-connector-thickness) solid var(--bracket-connector-color);
+  border-right: var(--bracket-connector-thickness) solid var(--bracket-connector-color);
   border-bottom-right-radius: 4px;
   background: transparent;
   transform: none;
   top: auto;
 }
-
-/* The vertical height needs to bridge the gap perfectly. 
-   Since we use Flexbox with `justify-content: space-around`, 
-   the exact pixel distance varies.
-   A better standard approach is using CSS Grid or fixed heights.
-   Let's use a simpler flex layout where each round has the same total height.
-*/
 
 .third-place-match::before,
 .third-place-match::after {
