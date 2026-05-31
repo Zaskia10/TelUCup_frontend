@@ -69,7 +69,7 @@ export function CreatePlayerModal({ isOpen, onClose, onSuccess }: any) {
         password: formData.password
       };
       const res = await createPlayer(payload);
-      onSuccess(res.message || "Player berhasil dibuat", res.user);
+      onSuccess(res.message || "Player berhasil dibuat", res.data?.user || res.user);
       onClose();
     } catch (err: any) {
       if (err.errors) {

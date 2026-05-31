@@ -19,6 +19,7 @@ import {
   Loader2,
   Eye,
   Users,
+  Pencil,
 } from "lucide-react";
 import { getMyLatestAssessment } from "@/services/selfAssessmentService";
 
@@ -187,7 +188,7 @@ export default function PlayerProfilSayaPage() {
   const displayEmail = user?.email || "—";
   const displayRole = user?.role || "player";
   const isKacamata =
-    user?.is_kacamata ?? assessment?.snapshot?.is_kacamata ?? false;
+    assessment?.snapshot?.is_kacamata ?? user?.is_kacamata ?? false;
   const initial = displayName.charAt(0).toUpperCase();
 
   // ── Loading ──
@@ -302,10 +303,10 @@ export default function PlayerProfilSayaPage() {
 
             <div className="mt-5 pt-4 border-t border-gray-100">
               <Link
-                href="/self-assessment"
+                href="/dashboard/player/edit-profil"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#b71c1c] hover:underline"
               >
-                <ClipboardList size={12} /> Isi / Perbarui Self-Assessment →
+                <Pencil size={12} /> Edit Profil →
               </Link>
             </div>
           </div>
@@ -319,12 +320,14 @@ export default function PlayerProfilSayaPage() {
               <ClipboardList size={20} className="text-[#b71c1c]" />
               Status Self-Assessment
             </h2>
-            <Link
-              href="/self-assessment"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#b71c1c] text-white text-sm font-bold rounded-lg hover:bg-[#9b1818] transition-colors shadow-sm"
-            >
-              {hasNoAssessment || !assessment ? "Mulai Assessment →" : "Isi Ulang →"}
-            </Link>
+            {(hasNoAssessment || !assessment) && (
+              <Link
+                href="/self-assessment"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#b71c1c] text-white text-sm font-bold rounded-lg hover:bg-[#9b1818] transition-colors shadow-sm"
+              >
+                Mulai Assessment →
+              </Link>
+            )}
           </div>
 
           {/* ── Empty state ── */}
@@ -353,19 +356,7 @@ export default function PlayerProfilSayaPage() {
                 <div className={`h-1.5 ${RISK_CONFIG[assessment.risk_label].headerBar}`} />
                 <div className="p-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                    {/* Confidence circle */}
-                    <div
-                      className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-[7px] ${RISK_CONFIG[assessment.risk_label].border} bg-white`}
-                    >
-                      <div className="text-center">
-                        <p className="text-lg font-extrabold text-gray-900 leading-tight">
-                          {Math.round(assessment.confidence_score ?? 0)}%
-                        </p>
-                        <p className="text-[9px] font-bold uppercase text-gray-400 leading-none">
-                          Conf.
-                        </p>
-                      </div>
-                    </div>
+
 
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-3 mb-2">

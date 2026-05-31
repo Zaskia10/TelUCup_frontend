@@ -254,7 +254,7 @@ export default function ProfilSayaPage() {
   const displayEmail = user?.email || contingent?.pic?.email || "—";
   const displayRole = user?.role || "pic_kontingen";
   const isKacamata =
-    user?.is_kacamata ?? contingent?.pic?.is_kacamata ?? assessment?.snapshot?.is_kacamata ?? false;
+    assessment?.snapshot?.is_kacamata ?? user?.is_kacamata ?? contingent?.pic?.is_kacamata ?? false;
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
@@ -358,12 +358,14 @@ export default function ProfilSayaPage() {
               <ClipboardList size={20} className="text-[#b71c1c]" />
               Status Self-Assessment
             </h2>
-            <Link
-              href="/self-assessment"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#b71c1c] text-white text-sm font-bold rounded-lg hover:bg-[#9b1818] transition-colors shadow-sm"
-            >
-              {hasNoAssessment || !assessment ? "Mulai Assessment →" : "Isi Ulang →"}
-            </Link>
+            {(hasNoAssessment || !assessment) && (
+              <Link
+                href="/self-assessment"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#b71c1c] text-white text-sm font-bold rounded-lg hover:bg-[#9b1818] transition-colors shadow-sm"
+              >
+                Mulai Assessment →
+              </Link>
+            )}
           </div>
 
           {/* Empty state */}

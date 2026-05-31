@@ -33,6 +33,54 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
+      // For players, check if onboarding is needed
+      if (data.user.role === "player") {
+        try {
+          const userRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/user`,
+            {
+              headers: {
+                Authorization: `Bearer ${data.token}`,
+                Accept: "application/json",
+              },
+            }
+          );
+          const userData = await userRes.json();
+          const player = userData.player;
+
+          // Check onboarding completeness
+          const needsOnboarding =
+            !player?.photo_path ||
+            !player?.employee_status ||
+            !player?.work_location;
+
+          if (needsOnboarding) {
+            router.push("/onboarding");
+            return;
+          }
+
+          // Check self-assessment
+          const saRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/self-assessment/me`,
+            {
+              headers: {
+                Authorization: `Bearer ${data.token}`,
+                Accept: "application/json",
+              },
+            }
+          );
+          const saData = await saRes.json();
+          if (!saData?.data?.is_valid) {
+            router.push("/onboarding");
+            return;
+          }
+        } catch {
+          // If check fails, send to onboarding to be safe
+          router.push("/onboarding");
+          return;
+        }
+      }
+
       router.push(getDashboardPathForRole(data.user.role));
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Login gagal. Silakan coba lagi.");

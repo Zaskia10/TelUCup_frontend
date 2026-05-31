@@ -4,9 +4,10 @@ import { useState, useEffect, FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementModal from "@/components/modal/AnnouncementModal";
 import SportsmanshipReminderModal from "@/components/modal/SportsmanshipReminderModal";
-import { getQuestionnaire, submitSelfAssessment } from "@/services/selfAssessmentService";
+import { getQuestionnaire, submitSelfAssessment, getMyLatestAssessment } from "@/services/selfAssessmentService";
 import { Loader2 } from "lucide-react";
 import { useActiveSportsmanshipPosters } from "@/hooks/useActiveSportsmanshipPosters";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 // Types
 type QuestionType = "number" | "single_choice" | "boolean" | "open_text" | "scale" | "multi_choice";
@@ -71,14 +72,25 @@ function QuestionBox({
   text,
   children,
   required = true,
+  hasError = false,
+  id,
 }: {
   number?: number;
   text: string;
   children: ReactNode;
   required?: boolean;
+  hasError?: boolean;
+  id?: string;
 }) {
   return (
-    <div className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+    <div
+      id={id}
+      className={`border-b border-gray-100 pb-6 last:border-b-0 last:pb-0 transition-all duration-300 ${
+        hasError
+          ? "bg-red-50/40 p-4 rounded-xl border border-red-200 shadow-sm"
+          : ""
+      }`}
+    >
       <div className="mb-4 flex items-start justify-between gap-4">
         <p className="text-sm font-semibold text-gray-900 leading-relaxed">
           {number && <span className="mr-2 text-gray-500">{number}.</span>}
@@ -86,8 +98,10 @@ function QuestionBox({
           {required && <span className="ml-1 text-[#B41F2A]">*</span>}
         </p>
         {required && (
-          <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-[#B41F2A] tracking-wider uppercase">
-            Wajib
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ${
+            hasError ? "bg-[#B41F2A] text-white animate-pulse" : "bg-red-50 text-[#B41F2A]"
+          }`}>
+            {hasError ? "Wajib Diisi!" : "Wajib"}
           </span>
         )}
       </div>
@@ -102,8 +116,21 @@ export default function SelfAssessmentPage() {
   const [error, setError] = useState("");
   const [data, setData] = useState<QuestionnaireData | null>(null);
   
+  // Get user ID to make draft key user-specific and prevent other logged in users' drafts from loading
+  const userId = typeof window !== "undefined" ? (() => {
+    try {
+      const userStr = localStorage.getItem("user");
+      return userStr ? JSON.parse(userStr)?.id : "";
+    } catch {
+      return "";
+    }
+  })() : "";
+  
+  const draftKey = userId ? `telucup_self_assessment_draft_${userId}` : "telucup_self_assessment_draft";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers, removeAnswers] = useLocalStorage<Record<string, any>>(draftKey, {});
+  const [unansweredCodes, setUnansweredCodes] = useState<string[]>([]);
   
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -118,6 +145,25 @@ export default function SelfAssessmentPage() {
     const fetchQ = async () => {
       try {
         setLoading(true);
+        
+        // Cek apakah user sudah mengisi form yang masih berlaku
+        try {
+          const myAssessment = await getMyLatestAssessment() as any;
+          // Format respons backend standar Telucup API { status, data: { id, valid_until, ... } }
+          const assessmentData = myAssessment?.data?.data || myAssessment?.data; 
+          
+          if (assessmentData && assessmentData.valid_until) {
+            const validUntilDate = new Date(assessmentData.valid_until);
+            if (validUntilDate > new Date()) {
+              // Jika masih valid, langsung redirect ke halaman hasil
+              router.replace(`/self-assessment/hasil?id=${assessmentData.id}`);
+              return; // hentikan proses render form
+            }
+          }
+        } catch (e) {
+          // Abaikan jika error 404 (belum punya profil/data), lanjut ambil kuesioner
+        }
+
         const res = await getQuestionnaire();
         setData((res.data || res) as unknown as QuestionnaireData);
       } catch (err) {
@@ -128,7 +174,7 @@ export default function SelfAssessmentPage() {
       }
     };
     fetchQ();
-  }, []);
+  }, [router]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (code: string, value: any) => {
@@ -149,6 +195,43 @@ export default function SelfAssessmentPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError("");
+    setUnansweredCodes([]);
+
+    if (!data) return;
+
+    // Validate all required questions
+    const missing: string[] = [];
+    data.sections.forEach((section) => {
+      section.questions.forEach((q) => {
+        const isRequired = q.required !== false;
+        if (isRequired) {
+          const val = answers[q.code];
+          if (
+            val === undefined ||
+            val === null ||
+            val === "" ||
+            (Array.isArray(val) && val.length === 0)
+          ) {
+            missing.push(q.code);
+          }
+        }
+      });
+    });
+
+    if (missing.length > 0) {
+      setUnansweredCodes(missing);
+      setSubmitError(`Terdapat ${missing.length} pertanyaan wajib yang belum Anda jawab. Silakan lengkapi pertanyaan yang ditandai merah.`);
+      
+      // Scroll to the first unanswered question
+      setTimeout(() => {
+        const firstFailedCode = missing[0];
+        const element = document.getElementById(`question-${firstFailedCode}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -156,6 +239,9 @@ export default function SelfAssessmentPage() {
       const result = await submitSelfAssessment(payload) as unknown as { data?: { id: number } };
       setAssessmentId(result.data?.id ?? null);
       
+      // Hapus draft di local storage setelah berhasil submit
+      removeAnswers();
+
       // Fetch active posters without blocking the flow completely if it fails
       try {
         await fetchActivePosters();
@@ -186,7 +272,7 @@ export default function SelfAssessmentPage() {
 
   const handleResetForm = () => {
     if (confirm("Apakah Anda yakin ingin mereset semua jawaban?")) {
-      setAnswers({});
+      removeAnswers();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -242,7 +328,7 @@ export default function SelfAssessmentPage() {
         </button>
 
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {data.sections.map((section) => (
             <SectionCard
               key={section.domain}
@@ -252,13 +338,16 @@ export default function SelfAssessmentPage() {
               {section.questions.map((q) => {
                 const currentNumber = questionCounter++;
                 const isRequired = q.required !== false;
+                const hasError = unansweredCodes.includes(q.code);
                 
                 return (
                   <QuestionBox
                     key={q.code}
+                    id={`question-${q.code}`}
                     number={currentNumber}
                     text={q.text}
                     required={isRequired}
+                    hasError={hasError}
                   >
                     <div className="mt-2 pl-6">
                       {/* Tipe Boolean */}

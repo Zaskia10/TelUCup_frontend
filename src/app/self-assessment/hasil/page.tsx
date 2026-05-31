@@ -353,16 +353,7 @@ export default function HasilAssessmentPage() {
               <div className={`h-1.5 ${risk.headerBar}`} />
               <div className="p-7">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center">
-                  <div
-                    className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[8px] ${risk.border} bg-white`}
-                  >
-                    <div className="text-center">
-                      <p className="text-2xl font-extrabold text-gray-900">{confidence}%</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
-                        Conf.
-                      </p>
-                    </div>
-                  </div>
+
 
                   <div className="flex-1">
                     <div className="mb-3 flex flex-wrap items-center gap-3">
