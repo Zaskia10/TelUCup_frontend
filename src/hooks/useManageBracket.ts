@@ -58,8 +58,11 @@ export function useManageBracket() {
   const fetchRegistrations = async (sportId: number, categoryId?: number | null) => {
     try {
       const res = await getRegistrations(sportId, categoryId);
-      const data = res.data;
-      setRegistrations(Array.isArray(data) ? data : []);
+      const rawData = res.data as any;
+      const dataArray = Array.isArray(rawData)
+        ? rawData
+        : (rawData && Array.isArray(rawData.data) ? rawData.data : []);
+      setRegistrations(dataArray);
     } catch {
       setRegistrations([]);
     }
