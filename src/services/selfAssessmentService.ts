@@ -1,20 +1,9 @@
-import { apiClient } from "@/lib/apiClient";
+export {
+  getQuestionnaire,
+  submitSelfAssessment,
+} from "@/features/self-assessment/services/selfAssessment.service";
 
-export const getQuestionnaire = async () => {
-  return apiClient.get<{ data: unknown }>("/self-assessment/questionnaire");
-};
-
-export const submitSelfAssessment = async (data: {
-  player_id: number | null;
-  answers: Record<string, string | number | boolean>;
-}) => {
-  return apiClient.post("/self-assessment", data);
-};
-
-export const getMyLatestAssessment = async () => {
-  return apiClient.get<{ data: unknown }>("/self-assessment/me");
-};
-
-export const getAssessmentById = async (id: number) => {
-  return apiClient.get(`/self-assessment/${id}`);
-};
+export {
+  getMyLatestAssessment,
+  getAssessmentById,
+} from "@/features/self-assessment-result/services/assessmentResult.service";
