@@ -1,13 +1,16 @@
-export const normalizeAssessmentResponse = (response: any) => {
+export const normalizeAssessmentResponse = <T>(response: unknown): T | null => {
   if (!response) return null;
+  
+  const res = response as Record<string, unknown>;
+  
   // TelUCup API format: { status, data: { id, valid_until, ... } }
   // or { data: { id, ... } }
   // or just the object itself.
-  if (response.data && response.data.data) {
-    return response.data.data;
+  if (res.data && (res.data as Record<string, unknown>).data) {
+    return (res.data as Record<string, unknown>).data as T;
   }
-  if (response.data) {
-    return response.data;
+  if (res.data) {
+    return res.data as T;
   }
-  return response;
+  return res as T;
 };

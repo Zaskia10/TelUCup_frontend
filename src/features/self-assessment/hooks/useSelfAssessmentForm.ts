@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { QuestionnaireData, AssessmentAnswerValue } from "../types/selfAssessment.types";
+import { QuestionnaireData, AssessmentAnswerValue, LatestAssessmentResponse } from "../types/selfAssessment.types";
 import { useAssessmentDraft } from "./useAssessmentDraft";
 import { getQuestionnaire, submitSelfAssessment } from "../services/selfAssessment.service";
 import { getMyLatestAssessment } from "@/services/selfAssessmentService";
@@ -14,7 +14,7 @@ export const useSelfAssessmentForm = () => {
   const [error, setError] = useState("");
   const [data, setData] = useState<QuestionnaireData | null>(null);
 
-  const { answers, setAnswers, removeAnswers, isLoaded: isDraftLoaded } = useAssessmentDraft();
+  const { answers, setAnswers, removeAnswers } = useAssessmentDraft();
   const [unansweredCodes, setUnansweredCodes] = useState<string[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +33,7 @@ export const useSelfAssessmentForm = () => {
 
         try {
           const myAssessment = await getMyLatestAssessment();
-          const assessmentData = normalizeAssessmentResponse(myAssessment);
+          const assessmentData = normalizeAssessmentResponse<LatestAssessmentResponse>(myAssessment);
 
           if (assessmentData && assessmentData.valid_until) {
             const validUntilDate = new Date(assessmentData.valid_until);
@@ -42,13 +42,13 @@ export const useSelfAssessmentForm = () => {
               return;
             }
           }
-        } catch (e) {
+        } catch {
           // Ignore if user has no data
         }
 
         const res = await getQuestionnaire();
-        const questionnaireData = normalizeAssessmentResponse(res) as QuestionnaireData;
-        setData(questionnaireData);
+        const questionnaireData = normalizeAssessmentResponse<QuestionnaireData>(res);
+        if (questionnaireData) setData(questionnaireData);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Gagal memuat pertanyaan self-assessment";
         setError(message);
@@ -100,9 +100,9 @@ export const useSelfAssessmentForm = () => {
     try {
       setIsSubmitting(true);
       // Strictly we expect answers to be formatted string | number | boolean | string[]
-      const payload = { player_id: null, answers: answers as any };
+      const payload = { player_id: null, answers: answers as Record<string, string | number | boolean | string[]> };
       const result = await submitSelfAssessment(payload);
-      const resData = normalizeAssessmentResponse(result);
+      const resData = normalizeAssessmentResponse<{ id: number }>(result);
       setAssessmentId(resData?.id ?? null);
       
       removeAnswers();
@@ -113,16 +113,17 @@ export const useSelfAssessmentForm = () => {
         // Silently handle if poster fetch fails
       }
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       let message = "Terjadi kesalahan saat mengirim self-assessment";
       if (err instanceof Error) {
         message = err.message;
       } else if (err && typeof err === "object") {
-        if (typeof err.message === "string") {
-          message = err.message;
+        const errorObj = err as Record<string, unknown>;
+        if (typeof errorObj.message === "string") {
+          message = errorObj.message;
         }
-        if (err.errors && typeof err.errors === "object") {
-          const detailMsgs = Object.values(err.errors).flat().join(", ");
+        if (errorObj.errors && typeof errorObj.errors === "object") {
+          const detailMsgs = Object.values(errorObj.errors as Record<string, unknown[]>).flat().join(", ");
           if (detailMsgs) {
             message = `${message}: ${detailMsgs}`;
           }
@@ -137,10 +138,13 @@ export const useSelfAssessmentForm = () => {
   useEffect(() => {
     if (assessmentId !== null && !isLoadingPosters) {
       if (activePosters && activePosters.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShowReminderModal(true);
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShowAnnouncementModal(true);
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSubmitting(false);
     }
   }, [assessmentId, isLoadingPosters, activePosters]);

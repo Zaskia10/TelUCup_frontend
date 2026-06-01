@@ -1,4 +1,4 @@
-import { QuestionDefinition, AssessmentAnswerValue } from "../../types/selfAssessment.types";
+import { QuestionDefinition, AssessmentAnswerValue } from "../types/selfAssessment.types";
 import { BooleanQuestionInput } from "./inputs/BooleanQuestionInput";
 import { SingleChoiceQuestionInput } from "./inputs/SingleChoiceQuestionInput";
 import { MultiChoiceQuestionInput } from "./inputs/MultiChoiceQuestionInput";
