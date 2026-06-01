@@ -63,7 +63,7 @@ export default function DokumentasiEventPICKontingen() {
               description=""
               emptyTitle="Belum ada foto yang cocok dengan wajah kamu."
               emptyDescription="Foto akan muncul setelah panitia mengunggah dokumentasi dan sistem selesai memproses wajah."
-              defaultStatus="approved"
+              defaultStatus="all"
               showStatusFilter={true}
               showSearch={true}
               showRefresh={true}
